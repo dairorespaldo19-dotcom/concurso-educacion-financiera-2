@@ -1,18 +1,20 @@
 <!doctype html>
 <html lang="es">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Bracket Interactivo - Torneo Educación Financiera</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Bracket Interactivo - Torneo Educación Financiera (con feedback)</title>
 <style>
   :root{
-    --bg:#061221;
-    --card:#0b2030;
-    --accent-blue:#1e90ff;
-    --accent-green:#2dd4bf;
-    --muted:#9aa9b2;
+    --bg:#061221; --card:#0b2030;
+    --accent-blue:#1e90ff; --accent-green:#2dd4bf;
+    --muted:#9aa9b2; --glass: rgba(255,255,255,0.03);
+    --toast-correct: #1f7a2f;
+    --toast-wrong: #9b2b2b;
+    --toast-skip: #555b66;
   }
-  html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--bg),#02121a);color:#e6f0f2;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;background:linear-gradient(180deg,#041322,#02121a);color:#eaf6f8}
   .container{max-width:1200px;margin:22px auto;padding:18px}
   .header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}
   h1{margin:0;font-size:20px}
@@ -26,24 +28,30 @@
   .team-row{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border-radius:8px;background:rgba(255,255,255,0.01)}
   .team-name{font-weight:700}
   .team-score{font-size:13px;color:var(--muted)}
-  .winner{box-shadow:0 6px 14px rgba(46,204,113,0.08);border-left:4px solid var(--accent-green)}
+  .winner{box-shadow:0 6px 14px rgba(46,204,113,0.06);border-left:4px solid var(--accent-green)}
   .center-col{display:flex;flex-direction:column;gap:22px;align-items:center;padding-top:20px}
   .final-box{padding:12px;border-radius:12px;background:linear-gradient(180deg,rgba(255,255,255,0.01),transparent)}
-  /* modal */
+  /* modal quiz */
   .modal-backdrop{position:fixed;inset:0;background:rgba(0,8,15,0.6);display:none;align-items:center;justify-content:center;z-index:1000}
-  .modal{background:linear-gradient(180deg,#071927,#041726);min-width:320px;max-width:980px;max-height:90vh;overflow:auto;border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.04)}
+  .modal{background:linear-gradient(180deg,#071927,#041726);width:96%;max-width:980px;max-height:90vh;overflow:auto;border-radius:12px;padding:14px;border:1px solid rgba(255,255,255,0.04)}
   .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-  .close{background:transparent;border:0;color:var(--muted);font-size:20px;cursor:pointer}
+  .close{background:transparent;border:0;color:var(--muted);font-size:22px;cursor:pointer}
   .quiz-body{padding:8px}
-  .qbox{padding:10px;border-radius:8px;background:rgba(255,255,255,0.01);margin-bottom:8px}
-  .options{display:flex;flex-direction:column;gap:8px;margin-top:8px}
-  label.option{display:flex;gap:10px;align-items:center;cursor:pointer}
+  .qbox{padding:12px;border-radius:8px;background:rgba(255,255,255,0.015);margin-bottom:8px}
+  .options{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+  label.option{display:flex;gap:12px;align-items:center;cursor:pointer}
   input[type="radio"]{accent-color:var(--accent-blue)}
   .controls{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:10px}
+  .timer{font-weight:800;padding:6px 10px;border-radius:8px;background:rgba(255,255,255,0.02);font-size:14px}
   .small{font-size:13px;color:var(--muted)}
-  @media (max-width:980px){
-    .bracket{grid-template-columns:1fr}
+  /* Toast (feedback) just below question */
+  .toast-wrap{display:flex;justify-content:center;margin-top:6px;min-height:28px}
+  .toast{
+    padding:8px 12px;border-radius:8px;color:#fff;font-weight:700;font-size:14px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.5);opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s;
   }
+  .toast.show{opacity:1;transform:translateY(0);}
+  @media (max-width:980px){.bracket{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -51,10 +59,10 @@
   <div class="header">
     <div>
       <h1>Bracket Interactivo — Torneo Educación Financiera</h1>
-      <div class="muted">Formato eliminación simple. Haz clic en la llave para iniciar el quiz (pregunta por pregunta, alternando equipos).</div>
+      <div class="muted">Formato: 6 preguntas por equipo / 12 por llave · 30s por pregunta · feedback visible debajo de la pregunta.</div>
     </div>
     <div style="display:flex;gap:10px;align-items:center">
-      <div class="muted small">Ponderaciones: Fácil=1 · Intermedio=2 · Difícil=3</div>
+      <div class="muted small">Ponderación: Principiante=1 · Intermedio=2 · Avanzado=3</div>
       <button id="resetBtn" class="btn">Resetear Bracket</button>
     </div>
   </div>
@@ -126,7 +134,6 @@
           </div>
         </div>
       </div>
-
     </div>
 
     <div class="col">
@@ -139,7 +146,7 @@
         </div>
       </div>
       <div style="height:14px"></div>
-      <div class="muted small" style="margin-top:10px">Instrucciones: haz clic en una llave para iniciar. El quiz muestra 1 pregunta a la vez, alternando entre equipos. Responde todas y calcula el ganador.</div>
+      <div class="muted small" style="margin-top:10px">Instrucciones: haz clic (o doble clic en semis/final) para iniciar. 30s por pregunta. Feedback justo debajo de la pregunta.</div>
     </div>
   </div>
 </div>
@@ -148,22 +155,27 @@
 <div class="modal-backdrop" id="modalBackdrop">
   <div class="modal" id="modal">
     <div class="modal-header">
-      <div>
-        <strong id="modalTitle">Llave</strong>
-        <div id="modalSubtitle" class="small muted"></div>
-      </div>
+      <div><strong id="modalTitle">Llave</strong><div id="modalSubtitle" class="small muted"></div></div>
       <div><button class="close" id="closeModal">&times;</button></div>
     </div>
 
     <div class="quiz-body" id="quizContainer">
-      <!-- aquí se inserta la pregunta una a una -->
+      <!-- Pregunta única y opciones aparecenderán aquí -->
     </div>
 
+    <!-- TOAST area: justo debajo de la pregunta (Opción 5) -->
+    <div class="toast-wrap"><div id="toast" class="toast" aria-live="polite"></div></div>
+
     <div class="controls" style="padding:10px;">
-      <div class="small muted" id="progressText">Pregunta 1/20</div>
-      <div>
-        <button id="prevBtn" class="btn" style="background:rgba(255,255,255,0.06);color:#e6f0f2;margin-right:8px">Anterior</button>
-        <button id="nextBtn" class="btn">Siguiente</button>
+      <div style="display:flex;gap:12px;align-items:center">
+        <div id="progressText" class="small">Pregunta 1/12</div>
+        <div id="teamText" class="small">Equipo: —</div>
+        <div id="numText" class="small">N° para equipo: —</div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <div class="timer" id="timerDisplay">30s</div>
+        <button id="skipBtn" class="btn" style="background:rgba(255,255,255,0.06);color:#eaf6f8">Saltar pregunta</button>
+        <button id="nextBtn" class="btn" style="display:none">Siguiente</button>
         <button id="submitQuiz" class="btn" style="display:none;background:linear-gradient(90deg,var(--accent-green),var(--accent-blue));">Calcular ganador</button>
       </div>
     </div>
@@ -172,260 +184,171 @@
 
 <script>
 /*
-  Este archivo utiliza las preguntas del banco "Preguntas Educación Financiera Básica.docx"
-  que subiste y que fue referenciado en la conversación. Fuente: archivo subido. :contentReference[oaicite:1]{index=1}
+  Fuente del banco de preguntas (archivo subido): /mnt/data/Preguntas educacion financiera.docx
+  (Ruta local usada como referencia). :contentReference[oaicite:1]{index=1}
 */
 
-/* PESOS */
-const WEIGHTS = { 'Fácil':1, 'Intermedio':2, 'Difícil':3 };
+/* Ponderaciones */
+const WEIGHTS = { 'Principiante':1, 'Intermedio':2, 'Avanzado':3 };
 
-/* --- Helper de creación de preguntas --- */
-function qObj(text, a,b,c,d, correct, level){
-  return { text, options:{a,b,c,d}, correct, level };
-}
+/* Helper para preguntas */
+function makeQ(text,a,b,c,d,correct,level){ return { text, options:{a,b,c,d}, correct, level }; }
 
-/* ---------- QUIZZES: Usamos preguntas reales del documento ----------
+/* 84 preguntas (idénticas a las del documento) */
+const questionsAll = [
+/* 1 */ makeQ('¿Cuál es el propósito esencial de un fondo de emergencia?','Cubrir gastos imprevistos que afecten tu estabilidad financiera.','Acumular capital para futuras inversiones rentables.','Mantener liquidez para aprovechar oportunidades de negocio.','Guardar dinero para gastos planificados de mediano plazo.','a','Principiante'),
+/* 2 */ makeQ('El APR (Tasa Porcentual Anual) en un crédito refleja:','Únicamente la tasa de interés nominal del préstamo.','El costo total anualizado incluyendo intereses y cargos adicionales.','El monto total que debes devolver al finalizar el plazo.','El porcentaje de tu ingreso comprometido en el pago.','b','Principiante'),
+/* 3 */ makeQ('Según la regla 50/30/20 para presupuesto personal, ¿qué porcentaje se destina a ahorro o pago de deudas?','30% para metas financieras y reducción de pasivos.','10% como mínimo recomendado para el ahorro.','20% para construir patrimonio y saldar obligaciones.','50% dividido entre ahorro e inversión.','c','Principiante'),
+/* 4 */ makeQ('La diferencia principal entre interés simple y compuesto es que:','El interés simple se calcula solo sobre el capital inicial.','El interés simple siempre produce mayores ganancias a largo plazo.','El interés compuesto solo se aplica en préstamos hipotecarios.','El interés compuesto genera rendimientos sobre intereses acumulados.','d','Principiante'),
+/* 5 */ makeQ('Para evitar un sobregiro en tu cuenta bancaria, es recomendable:','Monitorear regularmente tu saldo y configurar alertas.','Mantener siempre el saldo mínimo requerido por la entidad.','Solicitar una línea de crédito de respaldo automática.','Realizar retiros solo en cajeros de tu banco principal.','a','Principiante'),
+/* 6 */ makeQ('El objetivo principal de la educación financiera es que las personas:','Dominen fórmulas matemáticas complejas de finanzas avanzadas.','Gestionen sus recursos económicos con criterio y responsabilidad.','Multipliquen sus ingresos en el menor tiempo posible.','Eviten completamente el uso de servicios bancarios.','b','Principiante'),
+/* 7 */ makeQ('Gastos como alimentación, vivienda y transporte se clasifican como:','Gastos discrecionales que pueden eliminarse fácilmente.','Inversiones en capital humano de largo plazo.','Necesidades básicas esenciales para la vida diaria.','Gastos variables que dependen del estilo de vida.','c','Principiante'),
+/* 8 */ makeQ('Invertir consiste fundamentalmente en:','Guardar dinero en efectivo sin generar movimientos.','Adquirir bienes de consumo que mejoren tu calidad de vida.','Utilizar todo el dinero disponible para cancelar deudas.','Destinar recursos con expectativa de obtener ganancias futuras.','d','Principiante'),
+/* 9 */ makeQ('Antes de elegir un producto financiero, es fundamental preguntarse:','Cuál es la rentabilidad o costo que ofrece el producto.','Cuántos años tiene la institución en el mercado.','Qué opinan otras personas sobre esta entidad.','Quiénes son los directivos de la empresa financiera.','a','Principiante'),
+/*10*/ makeQ('Al comprar un producto a crédito en comparación con comprarlo de contado:','El costo total suele ser menor debido a promociones especiales.','Generalmente terminas pagando un monto superior al precio original.','Obtienes beneficios adicionales como garantías extendidas.','Pagas exactamente el mismo valor en ambas modalidades.','b','Principiante'),
+/*11*/ makeQ('Un factor crítico al decidir dónde ahorrar tu dinero es:','La ubicación geográfica de las sucursales bancarias.','Los colores y diseño de la imagen corporativa.','El nivel de seguridad y respaldo que ofrece la institución.','La antigüedad de la empresa en el sector.','c','Principiante'),
+/*12*/ makeQ('La capacidad que tiene una persona para cumplir con sus obligaciones financieras se denomina:','Liquidez disponible para operaciones corrientes.','Nivel de endeudamiento aceptable.','Patrimonio neto acumulado.','Solvencia o capacidad de pago.','d','Principiante'),
+/*13*/ makeQ('Si deseas solicitar una hipoteca y actualmente tienes deudas de consumo, lo más recomendable es:','Reducir o eliminar esas deudas antes de aplicar.','Consolidar todas las deudas en un solo préstamo personal.','No mencionar estas obligaciones en la solicitud hipotecaria.','Aumentar el plazo de pago de las deudas existentes.','a','Principiante'),
+/*14*/ makeQ('Una tarjeta de crédito te permite:','Acceder únicamente al dinero que tienes depositado.','Realizar compras utilizando un cupo de crédito prestado.','Identificarte como cliente preferencial del banco.','Evitar completamente el pago de comisiones bancarias.','b','Principiante'),
+/*15*/ makeQ('Una ventaja significativa del crédito es:','Reducir tus ingresos disponibles mensualmente.','Endeudarte sin límites ni restricciones.','Poder comprar inmediatamente sin disponer del monto total.','Eliminar la necesidad de ahorrar para el futuro.','c','Principiante'),
+/*16*/ makeQ('Financiar educación superior, vivienda propia o un negocio productivo se considera:','Deuda innecesaria que debe evitarse.','Deuda informal de alto riesgo.','Deuda mala que no genera valor.','Deuda buena con potencial de generar valor futuro.','d','Principiante'),
+/*17*/ makeQ('Una recomendación prudente al momento de invertir es:','Basarse en principios sólidos y estrategias conservadoras.','Seguir las tendencias populares y la publicidad masiva.','Elegir productos al azar para diversificar rápidamente.','Apostar en instrumentos de alta volatilidad exclusivamente.','a','Principiante'),
+/*18*/ makeQ('Para evaluar correctamente un préstamo es esencial revisar:','El número de cajeros automáticos disponibles.','Todos los costos asociados incluyendo cargos ocultos.','La modernidad y diseño de las oficinas.','La cantidad de productos que ofrece la entidad.','b','Principiante'),
+/*19*/ makeQ('Si tu presupuesto proyectado no coincide con los gastos reales, esto indica que:','Debes suspender temporalmente tu plan de ahorro.','Ya no es necesario hacer presupuestos futuros.','Debes ajustar y mejorar tus estimaciones.','Necesitas solicitar un préstamo para cubrir la diferencia.','c','Principiante'),
+/*20*/ makeQ('Elaborar un presupuesto personal consiste principalmente en:','Calcular únicamente los impuestos a pagar.','Analizar el rendimiento de tus inversiones en bolsa.','Abrir certificados de depósito a término fijo.','Detallar y proyectar tus ingresos y gastos esperados.','d','Principiante'),
+/*21*/ makeQ('El ahorro personal se define como:','La diferencia entre tus ingresos y tu consumo.','La diferencia entre tus activos totales y pasivos totales.','La suma de todas tus inversiones acumuladas.','El enganche pagado menos la deuda hipotecaria pendiente.','a','Principiante'),
+/*22*/ makeQ('Al elegir una institución para depositar tus ahorros, lo más importante es:','Las promociones y regalos que ofrecen actualmente.','El nivel de seguridad y regulación de la entidad.','El tipo de arquitectura de sus edificios.','Las condiciones climáticas de la ciudad donde opera.','b','Principiante'),
+/*23*/ makeQ('Al comparar opciones de crédito, lo fundamental es analizar:','El prestigio histórico de la marca bancaria.','La apariencia física de las instalaciones.','Condiciones específicas: tasas, comisiones y plazos.','Los colores corporativos de la institución.','c','Principiante'),
+/*24*/ makeQ('El tiempo transcurrido entre recibir un préstamo y realizar el primer pago se denomina:','Plan de amortización inicial.','Tasa de interés preferencial.','Comisión por apertura del crédito.','Periodo de gracia o diferimiento de pagos.','d','Principiante'),
+/*25*/ makeQ('Una ventaja de usar servicios formales de remesas internacionales es:','Ofrecen seguridad respaldada por supervisión regulatoria.','Nunca cobran comisiones por las transacciones.','No requieren ningún tipo de identificación personal.','No tienen límites en los montos a enviar.','a','Principiante'),
+/*26*/ makeQ('Una ventaja práctica de utilizar cajeros automáticos es:','Otorgan préstamos automáticos sin evaluación previa.','Reducen el tiempo de espera en filas de sucursales.','Operan exclusivamente durante horarios nocturnos.','No requieren el uso de tarjetas bancarias.','b','Principiante'),
+/*27*/ makeQ('En educación financiera, la gestión adecuada del dinero implica:','Utilizar crédito para financiar todos los gastos.','Ignorar los gastos pequeños y frecuentes.','Organizar ingresos y gastos de forma sistemática.','Ahorrar únicamente cuando sobra dinero al final del mes.','c','Principiante'),
+/*28*/ makeQ('El periodo sin obligación de pago inmediatamente después de recibir un préstamo se conoce como:','Comisión por apertura del crédito.','Penalidad por pago anticipado.','Retención provisional de fondos.','Periodo de gracia o diferimiento.','d','Principiante'),
 
-   - Las preguntas para cuartos (q1..q4) se basan en el banco y fueron adaptadas.
-   - Las preguntas para semifinales (sf1,sf2) y final (f) se distribuyen desde
-     secciones del banco (niveles intermedio/avanzado) y reordenadas para lograr
-     la distribución de niveles: por equipo (3 Difícil, 4 Intermedio, 3 Fácil).
-   - Cada llave tiene exactamente 20 preguntas: índices 0..9 -> Equipo1; 10..19 -> Equipo2.
+/* 29..56 Intermedio */
+ /*29*/ makeQ('El propósito fundamental de la educación financiera es:','Proporcionar herramientas para administrar el dinero eficazmente.','Identificar cuál es el mejor banco del país.','Facilitar el acceso a créditos complejos.','Enseñar exclusivamente sobre inversión en bolsa de valores.','a','Intermedio'),
+ /*30*/ makeQ('Vivir sin objetivos financieros claros se puede comparar con:','Conducir un automóvil sin combustible en el tanque.','Navegar en internet sin conexión estable.','Habitar en una casa recién construida sin amueblar.','Leer un libro sin páginas numeradas.','b','Intermedio'),
+ /*31*/ makeQ('La deuda de tarjetas de crédito frecuentemente se clasifica como "deuda mala" porque:','Está respaldada por bienes inmuebles de alto valor.','Siempre es deducible de impuestos en la declaración anual.','Tiene tasas elevadas y no genera beneficios futuros.','Sus tasas de interés son muy bajas comparadas con otros créditos.','c','Intermedio'),
+ /*32*/ makeQ('Antes de abrir una cuenta de ahorros es prudente:','Depositar grandes cantidades sin verificar las condiciones.','Aceptar la primera oferta sin leer detenidamente.','Abrir múltiples cuentas simultáneamente en varios bancos.','Revisar condiciones y hacer preguntas específicas.','d','Intermedio'),
+ /*33*/ makeQ('El periodo de gracia en un préstamo se refiere a:','El tiempo entre recibir el dinero y el primer pago.','La fecha límite de vencimiento del crédito.','El plazo máximo de mora sin penalizaciones.','Un descuento especial en los intereses pactados.','a','Intermedio'),
+ /*34*/ makeQ('La construcción de riqueza a largo plazo requiere aprender sobre:','Exclusivamente la planificación tributaria y fiscal.','Diversificación, interés compuesto y gestión de activos.','Únicamente los diferentes tipos de deudas disponibles.','Solo créditos de alto riesgo y alta rentabilidad.','b','Intermedio'),
+ /*35*/ makeQ('Para desarrollar hábitos financieros saludables y sostenibles se recomienda:','Depender completamente de asesores financieros externos.','Evitar totalmente cualquier tipo de deuda.','Estudiar y actualizar conocimientos regularmente.','Leer únicamente noticias económicas diarias.','c','Intermedio'),
+ /*36*/ makeQ('Ingresos como comisiones, bonos, premios o subsidios se clasifican como:','Ingresos fijos garantizados mensualmente.','Ingresos pasivos generados automáticamente.','Ingresos no contables para efectos fiscales.','Ingresos variables sin periodicidad garantizada.','d','Intermedio'),
+ /*37*/ makeQ('Invertir en títulos valores o certificados de depósito implica tener:','Instrumentos de renta fija y, potencialmente, variable.','Únicamente instrumentos de renta variable.','Exclusivamente bienes tangibles y físicos.','Dinero guardado en efectivo disponible.','a','Intermedio'),
+ /*38*/ makeQ('La matemática financiera se enfoca principalmente en:','Calcular activos y pasivos legales corporativos.','Trasladar capitales y montos en el tiempo.','Determinar impuestos y deducciones fiscales.','Gestionar tasas bancarias y comisiones administrativas.','b','Intermedio'),
+ /*39*/ makeQ('Un nivel prudente de "deuda mala" en tus finanzas personales debería ser:','Aproximadamente el 10% de tu ingreso anual total.','Variable según las políticas del banco que uses.','Prácticamente inexistente o muy reducido.','Superior a la mitad de tus ingresos mensuales.','c','Intermedio'),
+ /*40*/ makeQ('En el contexto de un préstamo, los "cargos" representan:','La tasa de interés final acordada en el contrato.','El monto total de cada cuota mensual de pago.','La garantía o colateral requerido por el banco.','Costos administrativos cobrados una sola vez.','d','Intermedio'),
+ /*41*/ makeQ('Un fondo de inversión se define como:','Un patrimonio común administrado profesionalmente.','Un crédito colectivo otorgado entre instituciones bancarias.','Un préstamo sin intereses para inversionistas nuevos.','Una cuenta de ahorros que nunca genera rendimientos.','a','Intermedio'),
+ /*42*/ makeQ('Cuando tus ingresos superan a tus gastos en un periodo determinado, la diferencia representa:','Tu patrimonio neto actualizado.','El ahorro generado en ese periodo.','Los impuestos que debes declarar.','Tu liquidez proyectada futura.','b','Intermedio'),
+ /*43*/ makeQ('Antes de solicitar un crédito hipotecario es aconsejable:','Aumentar significativamente el cupo de tus tarjetas.','Solicitar un crédito tipo globo como respaldo.','Reducir o eliminar deudas de consumo existentes.','No revisar el estado de tus deudas actuales.','c','Intermedio'),
+ /*44*/ makeQ('La diversificación de inversiones consiste en:','Invertir todos los recursos en una sola empresa sólida.','Guardar todo el dinero disponible en efectivo.','Comprar exclusivamente bonos gubernamentales.','Distribuir el capital en varios tipos de activos.','d','Intermedio'),
+ /*45*/ makeQ('La educación financiera te permite principalmente:','Desarrollar habilidades para una salud financiera integral.','Calcular únicamente tasas de interés complejas.','Dejar de utilizar cuentas bancarias tradicionales.','Acumular efectivo sin establecer metas claras.','a','Intermedio'),
+ /*46*/ makeQ('Al elegir fondos mutuos de inversión, el inversionista debe considerar:','La cantidad de oficinas que tiene la empresa.','Sus objetivos personales y tolerancia al riesgo.','Las opiniones no fundamentadas de amigos.','Los flujos históricos de capital extranjero.','b','Intermedio'),
+ /*47*/ makeQ('Durante la vigencia de un crédito, el cliente tiene derecho a:','Exigir tasas menores sin procesos de negociación.','No ser evaluado crediticiamente en ningún momento.','Recibir comprobantes y documentación de movimientos.','Modificar unilateralmente las condiciones del contrato.','c','Intermedio'),
+ /*48*/ makeQ('La práctica recomendada con facturas, recibos e impuestos pagados es:','Desecharlos inmediatamente después del pago.','Incluirlos en tu portafolio de inversiones.','Archivar únicamente los del año fiscal actual.','Guardarlos de manera ordenada y accesible.','d','Intermedio'),
+ /*49*/ makeQ('La competencia para gestionar ingresos y egresos personales implica:','Controlar los flujos de dinero del día a día.','Evaluar únicamente inversiones empresariales complejas.','Gestionar exclusivamente el capital de trabajo corporativo.','Calcular solamente tasas de interés de largo plazo.','a','Intermedio'),
+ /*50*/ makeQ('El documento esencial para comprender los costos de un fondo mutuo es:','Tu declaración de renta anual presentada.','El prospecto informativo del fondo.','Los extractos bancarios mensuales recientes.','El contrato de arrendamiento de vivienda.','b','Intermedio'),
+ /*51*/ makeQ('Una ventaja clave de las instituciones financieras reguladas es:','Ofrecer rentabilidades siempre superiores al mercado.','Operar con niveles de riesgo muy elevados.','Brindar seguridad legal y supervisión estatal.','Obligar a contratar todos sus productos disponibles.','c','Intermedio'),
+ /*52*/ makeQ('Al enviar dinero de un país a otro, un factor crítico a verificar es:','Las tasas de interés vigentes en ambos países.','La historia completa de la institución financiera.','La situación geopolítica actual internacional.','El tipo de cambio aplicado en la transacción.','d','Intermedio'),
+ /*53*/ makeQ('Los corredores o brokers hipotecarios son profesionales que:','Comparan opciones de crédito para el comprador.','Actúan como prestamistas informales no regulados.','Se dedican exclusivamente a tasar viviendas.','Funcionan como notarios especializados en inmuebles.','a','Intermedio'),
+ /*54*/ makeQ('Una inversión con mayor potencial de crecimiento a largo plazo generalmente es:','Cuentas de ahorro tradicionales básicas.','Fondos mutuos de renta variable (accionarios).','Certificados de depósito a término fijo.','Apuestas deportivas y juegos de azar.','b','Intermedio'),
+ /*55*/ makeQ('Para iniciar un presupuesto personal efectivo debes primero:','Cancelar completamente todas tus deudas.','Establecer una fuente de ingreso pasivo.','Estimar tus ingresos y gastos del periodo.','Completar formularios de declaración de impuestos.','c','Intermedio'),
+ /*56*/ makeQ('La diferencia principal entre proveedores formales e informales de remesas es que los formales:','No cobran ningún tipo de comisión por servicio.','Operan sin ninguna regulación gubernamental.','No reportan las transacciones a las autoridades.','Están supervisados por autoridades financieras.','d','Intermedio'),
 
-   Dado que el banco contiene muchas preguntas numeradas, aquí las incorporamos.
-*/
-
-/* ---------- Cuartos (ejemplos tomados y adaptados del banco) ---------- */
-const quizzes = {
-  q1: {
-    id:'q1',
-    teams:['Los Cotiquinos','Financiados y Asociados'],
-    topic:'Presupuestos',
-    questions:[
-      qObj('¿Cuál es la definición básica de un fondo de emergencia?','Un ahorro para vacaciones anuales.','Una reserva de dinero para gastos imprevistos.','Una inversión en acciones de alto riesgo.','Un préstamo a corto plazo de un banco.','b','Fácil'), // doc Q1
-      qObj('Según la regla 50/30/20, ¿qué porcentaje va a ahorro/pago de deudas?','50%','30%','20%','10%','c','Fácil'), // doc Q3
-      qObj('Si la estimación de su presupuesto difiere mucho de la realidad, ¿qué significa?','Aumentar ingresos','Revisar estimados','No manejar dinero','Reducir ahorros','b','Intermedio'), // doc 19
-      qObj('¿Qué documento ayuda a comparar gastos reales vs planificados?','Estado de cuenta','Presupuesto','Informe de inversión','Contrato','b','Fácil'),
-      qObj('¿Qué es ahorro para metas?','Dinero para emergencias','Dinero para objetivos específicos','Deuda a largo plazo','Inversión en bolsa','b','Intermedio'),
-      qObj('¿Cuál es la ventaja de tener un presupuesto?','Controlar gastos y alcanzar metas','Gastar más','Evitar ahorrar','Pagar menos impuestos','a','Fácil'),
-      qObj('¿Qué diferencia entre gasto fijo y variable?','Fijo no cambia mes a mes, variable sí','Variable no existe','Fijo es ahorro','Variable=impuesto','a','Intermedio'),
-      qObj('¿Qué es la diferencia real en un presupuesto?','Gastos planeados menos ahorro','Gastos reales menos ingresos','Diferencia entre tasas','Valor presente de activos','b','Intermedio'), // doc 85
-      qObj('¿Qué práctica ayuda a ahorrar?','Automatizar transferencias','Gastar lo que sobra','Abrir crédito','Invertir sin plan','a','Fácil'),
-      qObj('Dificultad: ¿Cómo incorporar inflación en presupuesto a largo plazo?','No ajustar nada','Ajustar metas y montos periódicamente','Duplicar gastos','Ignorar inflación','b','Difícil'), // doc adaptation
-
-      // Equipo 2 (11-20)
-      qObj('¿Por qué es importante un presupuesto?','Para controlar gastos','Para ignorar deudas','Para gastar más','No es importante','a','Fácil'), // doc earlier
-      qObj('¿Qué herramienta ayuda a documentar un presupuesto familiar?','Hoja de cálculo','Memoria','Contrato','Comprobante','a','Fácil'),
-      qObj('¿Qué hacer si presupuesto muestra déficit recurrente?','Vender activos','Revisar gastos o aumentar ingresos','Pedir préstamo inmediatamente','Ignorar','b','Intermedio'),
-      qObj('¿Qué representa la diferencia real?','Ingresos menos gastos','Gastos planeados menos reales','Saldo bancario','Activos totales','a','Intermedio'),
-      qObj('¿Qué es “ahorro para metas”?','Dinero separado para objetivos','Dinero para emergencias','Deuda','Inversión arriesgada','a','Intermedio'),
-      qObj('¿Qué indica un presupuesto sano?','Ahorro positivo periódico','Endeudamiento continuo','Gastos sin control','No registrar operaciones','a','Intermedio'),
-      qObj('¿Qué hacer para incrementar ahorro rápido?','Reducir gastos discrecionales','Aumentar gastos','Ignorar presupuesto','Pedir prestado','a','Difícil'),
-      qObj('¿Qué es priorizar gastos?','Pagar primero lo esencial','No pagar deudas','Comprar inversiones','Ignorar ingresos','a','Fácil'),
-      qObj('¿Qué instrumento ayuda con control de gastos?','Presupuesto mensual','Tarjeta nueva','Plazo fijo','Fondo de inversión','a','Fácil'),
-      qObj('Dificultad: ¿Cómo calcular capacidad de ahorro si metas cambian?','Reevaluar horizonte y ajustar cuotas','Mantener monto fijo','Incrementar deuda','Nada','a','Difícil')
-    ]
-  },
-
-  q2: {
-    id:'q2',
-    teams:['Los Tarara','Money Squad'],
-    topic:'Crédito',
-    questions:[
-      qObj('¿Qué representa el APR?','Principal','Costo total del crédito incluyendo cargos','Solo la tasa','Plazo en años','b','Intermedio'), // doc
-      qObj('¿Cómo se llama el periodo entre recibir préstamo y primer pago?','Cargos','Periodo de gracia','Plan de pagos','Tasa de interés','b','Fácil'), // doc 28
-      qObj('¿Qué se necesita para obtener crédito bancario?','Plan de gastos','Demostrar capacidad de pago','Firmar sin revisión','Rechazar productos adicionales','b','Intermedio'), // doc 33
-      qObj('¿Qué es una tarjeta de crédito?','Instrumento para comprar con crédito','Tarjeta de débito','Documento de identidad','Comprobante fiscal','a','Fácil'),
-      qObj('¿Qué es deuda “mala”?','Tarjeta de consumo alta tasa','Hipoteca','Préstamo estudiantil','Préstamo negocio','a','Intermedio'),
-      qObj('¿Qué revisar en condiciones de un préstamo?','Tasas, comisiones y plazos','Publicidad','Ubicación sucursal','Logo','a','Fácil'),
-      qObj('¿Qué es refinanciación?','Reemplazar préstamo por otro con mejores condiciones','Pagar menos cada mes sin cambiar nada','Aumentar deuda','Vender activos','a','Intermedio'),
-      qObj('¿Qué implica comprar a crédito?','Costo mayor que en efectivo','No pagar','Descuento mayor','Ingreso extra','a','Fácil'),
-      qObj('Dificultad: ¿Qué aspecto afecta más el costo efectivo?','Comisiones y capitalización','Sólo tasa nominal','Publicidad','Sucursal','a','Difícil'),
-      qObj('Dificultad: ¿Cómo comparar ofertas de crédito correctamente?','Calcular costo total efectivo','Comparar tasas nominales','Preguntar vecino','Elegir la más rápida','a','Difícil'),
-
-      // Equipo 2 (11-20)
-      qObj('¿Qué se recomienda revisar antes de aceptar una tarjeta?','Color del plástico','Términos, comisiones y tasas','Ubicación sucursal','Fotos web','b','Fácil'),
-      qObj('¿Qué significa capacidad de pago?','Solvencia','Tener tarjeta','Cumplir con inversiones','Comprar a crédito','a','Intermedio'),
-      qObj('¿Qué mejora perfil crediticio?','Pagar a tiempo y reducir deudas','Abrir muchas tarjetas','No usar crédito','Pedir prestado informal','a','Intermedio'),
-      qObj('¿Qué es cargo en préstamo?','Cobro administrativo adicional','Tasa de interés','Principal del préstamo','Ingreso','a','Fácil'),
-      qObj('¿Qué regula instituciones financieras?','Banco central y supervisores','Tiendas locales','Asociaciones','Clientes','a','Fácil'),
-      qObj('¿Qué efecto tiene capitalización frecuente?','Aumenta costo efectivo','Reduce interés','No cambia','Hace préstamo nulo','a','Difícil'),
-      qObj('¿Cuál ventaja del crédito responsable?','Permite compras planificadas','Generar deuda sin límite','Evitar ahorrar','Comprar sin control','a','Fácil'),
-      qObj('¿Qué es periodo de gracia (recurso)?','Tiempo antes del primer pago','Pago sin interés para siempre','Comisión','Tipo de crédito','a','Fácil'),
-      qObj('¿Qué verificar antes de firmar préstamo?','Tasas, plazo, comisiones','Slogan','Publicidades','Nombre del gerente','a','Intermedio'),
-      qObj('Dificultad: ¿Cómo evaluar conveniencia de consolidar deudas?','Comparar costo total y duración','Hacerlo siempre','Nunca hacerlo','Solo por marketing','a','Difícil')
-    ]
-  },
-
-  q3: {
-    id:'q3',
-    teams:['CashCrew','Capitalizados'],
-    topic:'Ahorro',
-    questions:[
-      qObj('¿Cuál es la definición de fondo de emergencia?','Ahorro para vacaciones','Reserva para gastos imprevistos','Inversión en acciones','Préstamo bancario','b','Fácil'), // doc
-      qObj('¿Cuánto debería ser reserva de emergencia?','3-6 meses de gastos','1 mes','10 años','Nada','a','Intermedio'),
-      qObj('¿Instrumento para ahorro corto y bajo riesgo?','Cuenta de ahorro o certificado','Acciones volátiles','Criptomonedas','Coleccionables','a','Fácil'),
-      qObj('¿Qué evaluar al elegir servicio de ahorro?','Seguridad y condiciones','Color del logo','Música de espera','Ubicación','a','Intermedio'),
-      qObj('¿Qué es ahorro para metas?','Dinero separado para objetivos','Dinero para emergencias','Deuda','Juego','a','Fácil'),
-      qObj('¿Qué apoya formación de ahorro?','Automatizar transferencias','Gastar lo que sobra','Abrir crédito nuevo','Invertir a ciegas','a','Fácil'),
-      qObj('¿Qué es rentabilidad real?','Rendimiento ajustado por inflación','Tasa nominal','Comisión','Principal','a','Intermedio'),
-      qObj('Dificultad: ¿Cómo determinar horizonte de ahorro?','Definir objetivo y plazo','Ahorrar sin objetivo','Invertir todo corto plazo','No hay método','a','Difícil'),
-      qObj('Dificultad: ¿Por qué diversificar ahorros?','Reducir riesgo global','Ganar siempre más','Evitar cuentas bancarias','No pagar impuestos','a','Difícil'),
-      qObj('¿Ventaja de instituciones formales para ahorro?','Seguridad y supervisión','No pagar impuestos','No dar datos','Abrir cuentas anónimas','a','Fácil'),
-
-      // Equipo 2
-      qObj('Diferencia entre ahorro e inversión?','Ahorro liquidez, inversión busca rendimiento','No hay diferencia','Ahorro arriesga más','Inversión siempre líquido','a','Intermedio'),
-      qObj('Instrumento con mayor rendimiento largo plazo?','Renta variable/acciones','Cuenta de ahorro','Certificado corto','Caja informal','a','Intermedio'),
-      qObj('¿Qué preguntar al elegir ahorro?','Cuál es la tasa o rendimiento?','Logo','Ubicación','Opinión','a','Fácil'),
-      qObj('Método apropiado ahorro corto y bajo riesgo?','Cuenta de ahorro o CD','Invertir en futuros','Efectivo en casa','Comprar vacío','a','Fácil'),
-      qObj('Regla 50/30/20 y ahorro?','20% para ahorro/pago de deudas','50% para ahorro','30% para ahorro','0% para ahorro','a','Fácil'),
-      qObj('Dificultad: equilibrio liquidez y rendimiento?','Combinar instrumentos por horizonte','Invertir todo en renta variable','Todo en efectivo','Comprar oro','a','Difícil'),
-      qObj('¿Qué revisar para detectar fraude?','Movimientos en cuentas y estados','Publicidad','Slogans','Color del banco','a','Fácil'),
-      qObj('Beneficio de automatizar ahorro?','Disciplina y continuidad','Aumento gasto','Pérdida inversión','Nada','a','Fácil'),
-      qObj('Dificultad: ajustar ahorro ante caída de ingresos?','Reducir gastos discrecionales y mantener emergencias','Cerrar cuentas','Pedir crédito','Vender activos sin plan','a','Difícil'),
-      qObj('Relación entre presupuesto y ahorro?','Ahorro surge si ingresos>gastos presupuestados','No hay relación','Ahorro siempre fijo','Presupuesto no importa','a','Intermedio')
-    ]
-  },
-
-  q4: {
-    id:'q4',
-    teams:['Capital Go Three','Dayro Moreno'],
-    topic:'Inversión',
-    questions:[
-      qObj('¿Qué es la inversión?','Asignar recursos para obtener beneficios futuros','Gastar en consumo','Pedir préstamos','Guardar en casa','a','Fácil'),
-      qObj('¿Qué es diversificación?','Distribuir capital entre distintos activos','Invertir todo en una empresa','No invertir','Pedir prestado','a','Intermedio'),
-      qObj('Instrumento con mayor crecimiento largo plazo?','Acciones/fondos renta variable','Cuenta de ahorro','Certificado depósito','Pagos rutinarios','a','Intermedio'),
-      qObj('¿Qué debe conocer el inversionista?','Metas y tolerancia al riesgo','Color del logo','Música','Ubicación','a','Fácil'),
-      qObj('Dificultad: ¿Qué es la capitalización?','Proceso de obtener capital final desde inicial','Un impuesto','Un cargo','Una garantía','a','Difícil'),
-      qObj('¿Qué es un portafolio de inversión?','Conjunto diversificado de instrumentos','Cuenta de ahorro','Crédito hipotecario','Cheque','a','Intermedio'),
-      qObj('¿Qué es un Fondo Mutuo?','Patrimonio conjunto administrado profesionalmente','Un préstamo','Tipo de tarjeta','Servicio de envío','a','Intermedio'),
-      qObj('Dificultad: volatilidad y horizonte largo?','Menos impacto si horizonte largo y diversificado','Siempre destruye capital','No importa','Solo afecta índices','a','Difícil'),
-      qObj('¿Por qué diversificar reduce riesgo?','Porque no todas las inversiones se mueven igual','Porque aumenta costos','Porque elimina todo riesgo','Porque es legal','a','Intermedio'),
-      qObj('¿Qué recomienda para nuevos inversionistas?','Comenzar con instrumentos simples y diversificados','Ir a derivados','Pedir préstamos para invertir','No invertir','a','Fácil'),
-
-      // Equipo 2
-      qObj('¿Qué elemento es clave al analizar una inversión?','Horizonte, riesgo y objetivo','Moda','Vecino','Empaque','a','Intermedio'),
-      qObj('¿Qué es renta fija?','Instrumentos con pagos periódicos y vencimientos','Acciones','Fondos mutuos de acciones','Ahorro informal','a','Intermedio'),
-      qObj('¿Qué preguntar antes de invertir en acciones?','¿Cuál es mi horizonte y tolerancia al riesgo?','Dónde queda la empresa','Opinión del primo','Costo del logo','a','Intermedio'),
-      qObj('Dificultad: evaluar rendimiento real?','Comparar rendimiento nominal menos inflación y comisiones','Solo mirar nominal','Comparar colores','Comparar logos','a','Difícil'),
-      qObj('¿Qué es valor nominal?','Cantidad indicada que se pagará al vencimiento','Tasa de interés','Rendimiento real','Comisión','c','Fácil'),
-      qObj('¿Qué debe hacer un inversionista para reducir riesgo?','Diversificar y ajustar según horizonte','Invertir todo en producto publicitado','Mantener en caja','Evitar educación financiera','a','Intermedio'),
-      qObj('Dificultad: relación riesgo-retorno?','Mayor riesgo suele asociarse a mayor retorno esperado','Riesgo produce pérdidas','No existe relación','Riesgo es liquidez','a','Difícil'),
-      qObj('¿Qué se entiende por plazo en la inversión?','Tiempo que se espera mantener el activo','Comisión bancaria','Impuesto','Cantidad mínima','a','Fácil'),
-      qObj('¿Qué es estrategia pasiva?','Mantener cartera diversificada a largo plazo','Alta frecuencia','Pedir préstamos para apalancar','Seguir redes sociales','a','Intermedio'),
-      qObj('¿Por qué importan las comisiones?','Reducen rendimiento neto','No tienen efecto','Importan solo para grandes','Solo afectan bancos','a','Intermedio')
-    ]
-  },
-
-  /* ---------- Semifinales y final: armamos sets balanceados usando preguntas reales del banco.
-      Para cada ronda, las preguntas se eligen desde secciones de tu documento (niveles intermedio/avanzado).
-      Aseguramos por equipo: 3 Difícil, 4 Intermedio, 3 Fácil -> total ponderado 20.
-      (Las preguntas concretas están tomadas/adaptadas del doc subido)
-  */
-  sf1:{ id:'sf1', teams:['Ganador Q1','Ganador Q2'], topic:'Riesgo & Deuda', questions: [] },
-  sf2:{ id:'sf2', teams:['Ganador Q3','Ganador Q4'], topic:'Seguros & Planificación', questions: [] },
-  f:  { id:'f',   teams:['Ganador SF1','Ganador SF2'], topic:'Planificación a Largo Plazo', questions: [] }
-};
-
-/* ---------- Aquí integramos preguntas reales desde tu banco para SF1, SF2 y Final ----------
-   Para no inventar ni desalinear, seleccioné preguntas del documento:
-   (Numeración y textos provienen del archivo subido: Preguntas Educación Financiera Básica.docx). :contentReference[oaicite:2]{index=2}
-*/
-
-/* Helpers: preguntas reales tomadas del documento (extracción y adaptación) */
-const realPool = [
-  // (I include preguntas del banco con su respuesta correcta como en el doc.)
-  qObj('¿Cuál es el propósito fundamental de la educación financiera?','Aumentar el conocimiento de la economía global.','Enseñar a la gente conceptos sobre el dinero y cómo administrarlo cuidadosamente.','Facilitar la apertura de cuentas bancarias.','Determinar el mejor fondo de inversión disponible.','b','Intermedio'), // #41
-  qObj('¿Qué se recomienda hacer antes de abrir una cuenta de ahorro en una institución financiera?','Depositar una gran cantidad inmediatamente.','Formular una lista de preguntas sobre características y responsabilidades.','Consultar publicidad exclusivamente.','Aceptar el primer producto ofrecido.','b','Intermedio'), // #44
-  qObj('En el contexto del crédito, ¿qué es Periodo de Gracia?','Tiempo que dura un préstamo.','Periodo después de recibir préstamo y antes del primer pago.','Tiempo para pagar sin interés.','Periodo máximo de retraso.','b','Fácil'), // #45
-  qObj('¿Qué es la tasa de porcentaje anual (APR)?','Tasa simple del capital.','Porcentaje que mide el costo total incluyendo intereses y cargos.','El monto del principal.','Un cargo administrativo.','b','Intermedio'),
-  qObj('¿Cuál es la distinción entre solvencia y liquidez?','Solvencia=ingresos futuros; Liquidez=gastos fijos.','Solvencia=capacidad a largo plazo; Liquidez=efectivo disponible para obligaciones inmediatas.','No hay diferencia.','Liquidez solo aplica empresas.','b','Avanzado'), // #81
-  qObj('¿Qué es un fondo de inversión?','Un préstamo colectivo a empresas.','Patrimonio conjunto administrado profesionalmente.','Una cuenta corriente que no genera rendimientos.','Un crédito hipotecario.','b','Intermedio'), // #53
-  qObj('¿Qué es diversificación de inversiones?','Invertir todo en una sola compañía.','Distribuir capital entre diferentes activos o industrias.','Invertir solo en bonos.','Mantener en cuenta de ahorro.','b','Intermedio'), // #56
-  qObj('¿Cuál es la ventaja de usar instituciones formales para remesas?','Transferencias sin registros.','Seguridad y supervisión por autoridades financieras.','Procesan instantáneamente siempre.','No requieren identificación.','b','Fácil'), // #25
-  qObj('¿Qué es un prospecto de fondo?','Recibo de depósito.','Extracto bancario.','Documento legal del fondo con cargos y condiciones.','Declaración de impuestos.','c','Intermedio'), // #62
-  qObj('¿Qué acción debe realizar un ahorrador si encuentra un error en su reporte crediticio?','Ignorar la información.','Asumir que es correcta.','Corregir los errores ante agencias de reportes crediticios.','Declararse en bancarrota.','c','Intermedio'), // #70
-  qObj('¿Qué es amortización?','Pago gradual de un préstamo.','Ingresos adicionales.','Comisión bancaria.','Tasa de interés.','a','Intermedio'), // referenced
-  qObj('¿Qué es valor nominal de un documento?','Valor actual descontado.','Tasa de interés acordada.','Cantidad indicada que se pagará al vencimiento.','Capital inicial prestado.','c','Fácil'), // #97
-  qObj('¿Qué concepto describe la capacidad de pago para enfrentar gastos inesperados?','Tasa interna de retorno.','Renta de anualidad.','Amortización negativa.','Previsión de contingencias.','d','Intermedio'), // #99
-  qObj('¿Qué se entiende por “activo neto financiero”?','Suma de ingresos.','Diferencia entre activos y pasivos.','Dinero en el banco.','Monto total de deudas de consumo.','b','Intermedio'), // #80
-  qObj('¿Qué es la amortización negativa?','Cuando pagos no cubren intereses y el principal crece.','Un tipo de ahorro.','Un impuesto.','Un seguro.','a','Difícil'), // #87
-  qObj('¿Qué es la capitalización en finanzas?','Obtener capital inicial a partir del final.','Calcular tasa nominal.','Obtener capital final a partir del inicial.','Suma de cuotas de una anualidad.','c','Intermedio'), // #96
-  qObj('¿Qué significa refinanciación?','Reemplazar deuda por otra con condiciones más favorables.','Aumentar deuda sin cambiar condiciones.','Pagar menos sin cambiar nada.','No implica cambios.','a','Intermedio'), // #86
-  qObj('¿Cuál es una ventaja de la renta (vs compra) al acercarse a la jubilación?','Mayor deducción de impuestos.','Mayor flexibilidad financiera y psicológica.','Mayor acumulación de patrimonio.','Mayor inversión ligada a activo fijo.','b','Intermedio'), // #110
-  qObj('¿Qué se recomienda para mejorar perfil crediticio?','Pagar a tiempo y reducir deuda.','Abrir muchas tarjetas.','No usar crédito.','Pedir préstamos informales.','a','Intermedio'),
-  qObj('Dificultad: ¿Cómo medir tolerancia al riesgo?','Con cuestionario y comportamiento ante pérdidas.','Por edad únicamente.','Por ingresos solamente.','No se puede medir.','a','Difícil'),
-  qObj('¿Qué debe revisar un inversionista para comparar rendimientos reales?','Solo rendimiento nominal.','Rendimiento nominal menos inflación y comisiones.','Colores del informe.','Nombre del gestor.','b','Difícil'),
-  qObj('¿Qué indicador es clave al solicitar una hipoteca?','Historial de ahorro para jubilación.','Ingreso anual y suma de pagos mensuales de deuda más costos de vivienda.','Gastos en entretenimiento.','Activo neto financiero.','b','Intermedio'), // #109
-  qObj('¿Qué es un portafolio de inversión?','Anualidad perpetua.','Conjunto diversificado de instrumentos.','Fondo de renta fija solo.','Límite máximo de crédito hipotecario.','b','Intermedio'), // #95
-  qObj('¿Cuál es la meta final de la educación financiera?','Convertirse en experto en bolsa.','Promover hábitos y decisiones financieras saludables.','Alcanzar metas de ahorro fijas.','Incentivar dependencia de servicios financieros.','b','Intermedio'), // #98
-  qObj('¿Qué es la señal más grande de riesgo con asesor que cobra por hora?','Que sea muy barato.','Contratar a alguien ineficaz.','Ocultar comisiones.','No saber de criptomonedas.','b','Intermedio'), // #72
-  qObj('¿Qué derecho tienen los clientes al firmar un contrato?','Exigir descuento en tasa.','Firmar sin leer.','Obtener ejemplar de todos los documentos firmados.','Modificar contrato unilateralmente.','c','Intermedio'), // #73
-  qObj('¿Qué se entiende por “cargos” en un préstamo?','Cobros administrativos adicionales','Intereses acumulados','Principal pagado mensualmente','Garantía del préstamo','a','Intermedio'), // #52
-  qObj('¿Cuál es la principal diferencia entre proveedores de remesas formales e informales?','Informales son más baratos.','Formales están regulados y supervisados.','Informales incluyen bancos comerciales.','Formales no reportan acciones.','b','Intermedio'), // #68
-  qObj('¿Qué es un corredor hipotecario?','Persona que presta dinero.','Intermediario que compara prestamistas para obtener mejor hipoteca.','Abogado de bienes raíces.','Tasador de propiedades.','b','Intermedio'), // #65
-  qObj('Dificultad: ¿Qué es una amortización negativa (aplicación)?','Los pagos no cubren intereses y principal aumenta','Un tipo de ahorro','Un impuesto','Un seguro','a','Difícil'),
-  qObj('¿Qué se debe hacer si se encuentra un error en el reporte crediticio?','Ignorarlo.','Asumir correcto.','Corregirlo ante las agencias.','Declararse en bancarrota.','c','Intermedio') // repetido por consistencia
+/* 57..84 Avanzado */
+ /*57*/ makeQ('La principal diferencia entre solvencia y liquidez es que:','La liquidez mide tu capacidad inmediata de pago.','La solvencia se aplica exclusivamente a empresas.','La liquidez calcula únicamente activos futuros.','Ambos términos son completamente idénticos.','a','Avanzado'),
+ /*58*/ makeQ('Las metas financieras deben definirse antes del presupuesto porque:','Evitan el pago de impuestos innecesarios.','Orientan cómo se distribuirán los recursos.','Permiten calcular con precisión tu patrimonio neto.','Determinan automáticamente la tasa efectiva anual.','b','Avanzado'),
+ /*59*/ makeQ('La sostenibilidad financiera a largo plazo implica:','Realizar un esfuerzo de ahorro único y puntual.','Invertir exclusivamente en negocios ecológicos.','Mantener disciplina constante para asegurar estabilidad.','Buscar retornos inmediatos y muy elevados.','c','Avanzado'),
+ /*60*/ makeQ('Para alguien que ya tiene hábitos sólidos de ahorro, el análisis detallado de gastos:','Debe realizarse diariamente sin excepción.','Debe enfocarse exclusivamente en gastos de lujo.','Puede ser menos riguroso si ya hay control establecido.','Debe eliminar por completo los gastos fijos.','c','Avanzado'),
+ /*61*/ makeQ('En el análisis presupuestario, la "diferencia real" se refiere a:','La diferencia entre ingresos y gastos reales.','La variación entre el plan y el ahorro logrado.','El saldo disponible en certificados de depósito.','La diferencia nominal reportada por el banco.','a','Avanzado'),
+ /*62*/ makeQ('Refinanciar una deuda consiste en:','Extender el plazo sin revisar otras condiciones.','Reemplazar un préstamo por otro con mejores términos.','Consolidar automáticamente todas las deudas existentes.','Eliminar completamente los intereses acumulados.','b','Avanzado'),
+ /*63*/ makeQ('Cuando un préstamo de tasa ajustable no cubre todos los intereses generados, ocurre:','Una situación de mora preventiva automática.','La aplicación de una tasa preferencial temporal.','Amortización negativa del capital.','Un periodo de pago extendido sin cargos.','c','Avanzado'),
+ /*64*/ makeQ('El APR (Annual Percentage Rate) de un préstamo representa:','La tasa de interés simple del banco prestamista.','El porcentaje de tu patrimonio comprometido.','La tasa de inflación estimada para el periodo.','El costo anual total incluyendo intereses y cargos.','d','Avanzado'),
+ /*65*/ makeQ('El principal riesgo al contratar un asesor financiero por horas es:','Contratar alguien ineficiente sin claridad del costo final.','Estar obligado a tasas de interés específicas.','Ser forzado a realizar inversiones inmediatas.','No poder modificar el plan financiero después.','a','Avanzado'),
+ /*66*/ makeQ('Las tarjetas de crédito tienen tasas de interés elevadas principalmente porque:','No requieren garantías reales o colaterales.','Están subsidiadas por programas gubernamentales.','Son préstamos sin contrato formal escrito.','Se diseñan exclusivamente para uso empresarial.','a','Avanzado'),
+ /*67*/ makeQ('La libertad financiera se alcanza cuando:','Tu consumo mensual supera tus ingresos regulares.','El rendimiento de tus activos cubre tus gastos.','Acumulas múltiples tarjetas de crédito disponibles.','El banco incrementa tus tasas de interés.','b','Avanzado'),
+ /*68*/ makeQ('Los ahorros destinados a objetivos de corto plazo deben mantenerse en:','Acciones de empresas con alta volatilidad.','Inversiones en negocios emprendedores.','Instrumentos líquidos y de bajo riesgo.','Préstamos hipotecarios de largo plazo.','c','Avanzado'),
+ /*69*/ makeQ('Un fondo de emergencia adecuado generalmente equivale a:','Un mes completo de salario neto recibido.','La mitad del valor total de tu patrimonio.','Un trimestre completo de ingresos brutos.','De 3 a 6 meses de gastos esenciales.','d','Avanzado'),
+ /*70*/ makeQ('Comprar un bono como inversión significa:','Prestar dinero a un emisor que pagará intereses.','Adquirir acciones de propiedad en una empresa.','Comprar un certificado de depósito variable.','Adquirir un pagaré de obligación personal.','a','Avanzado'),
+ /*71*/ makeQ('Un portafolio de inversión se define como:','Un crédito hipotecario estructurado y complejo.','Un conjunto diversificado de activos financieros.','Un certificado de depósito de largo plazo.','Una anualidad vitalicia garantizada.','b','Avanzado'),
+ /*72*/ makeQ('En matemática financiera, la capitalización es el proceso de:','Convertir el valor futuro en valor inicial presente.','Sumar todas las cuotas pagadas históricamente.','Obtener el valor futuro desde el capital inicial.','Reducir las tasas de interés aplicables.','c','Avanzado'),
+ /*73*/ makeQ('El valor nominal de un documento financiero es:','Su valor descontado a la fecha actual.','El capital inicial sin considerar intereses.','El valor presente con fines legales.','La cantidad a pagar al vencimiento.','d','Avanzado'),
+ /*74*/ makeQ('La educación financiera busca principalmente:','Formar hábitos para decisiones sostenibles.','Convertirte en un experto bursátil profesional.','Incrementar continuamente tu nivel de gasto.','Enfocarse exclusivamente en el ahorro.','a','Avanzado'),
+ /*75*/ makeQ('Tener previsión de contingencias significa:','Evitar solicitar cualquier préstamo hipotecario.','Poder afrontar imprevistos sin endeudarse.','Realizar retiros impulsivos frecuentemente.','Cubrir únicamente las deudas existentes.','b','Avanzado'),
+ /*76*/ makeQ('Una desventaja para adultos que reciben educación financiera por primera vez es:','Aprender los conceptos demasiado rápido.','Obtener menores ingresos temporalmente.','Resistirse a cambiar hábitos arraigados.','No poder acceder a inversiones complejas.','c','Avanzado'),
+ /*77*/ makeQ('Cuando la educación financiera se evalúa mediante pruebas estandarizadas, hablamos de:','Educación financiera conductual aplicada.','Análisis contextual de finanzas personales.','Medición parafiscal de conocimientos.','Educación financiera objetiva.','d','Avanzado'),
+ /*78*/ makeQ('Para evitar compras impulsivas o emocionales se recomienda:','Usar estrategias de control consciente del dinero.','Endeudarse únicamente con "deuda buena".','Pagar todas las compras con préstamos.','Comprar siempre en épocas de promociones.','a','Avanzado'),
+ /*79*/ makeQ('La riqueza medida en términos de tiempo se refiere a:','La cantidad de dinero que ganas anualmente.','Cuánto tiempo puedes vivir sin ingresos activos.','La suma total de tus inversiones actuales.','El valor acumulado en propiedades inmobiliarias.','b','Avanzado'),
+ /*80*/ makeQ('Un seguro es fundamentalmente:','Un certificado de depósito con características especiales.','Una inversión de renta fija garantizada.','Un acuerdo de compensación por pérdidas mediante pagos.','Un crédito rotativo de emergencia.','c','Avanzado'),
+ /*81*/ makeQ('Una tarjeta de pago (charge card) se caracteriza por:','Tener intereses rotativos mensuales variables.','No requerir ningún pago mínimo mensual.','Exigir pago total del saldo en cada corte.','Ser una tarjeta prepagada recargable.','c','Avanzado'),
+ /*82*/ makeQ('Una tarjeta de débito se diferencia de una de crédito porque:','Toma dinero directamente de tu cuenta.','Utiliza un cupo de dinero prestado.','Permite pagos en cuotas extendidas.','Siempre genera intereses sobre saldo.','a','Avanzado'),
+ /*83*/ makeQ('Un fondo de renta fija de corto plazo típicamente invierte en:','Bonos con vencimientos superiores a 10 años.','Bonos que maduran en 2-3 años aproximadamente.','Acciones con alta volatilidad de mercado.','Contratos de futuros en divisas internacionales.','b','Avanzado'),
+ /*84*/ makeQ('Un Certificado de Inversión indexado es atractivo porque:','Está completamente libre de impuestos siempre.','Equivale a un préstamo sin garantías.','Sus rendimientos suelen ajustarse con la inflación.','Utiliza únicamente interés simple en su cálculo.','c','Avanzado')
 ];
 
-/* Ahora construimos los sets balanceados para SF1, SF2 y Final extrayendo bloques de realPool.
-   Cada set necesita 20 preguntas (0..9 equipo1, 10..19 equipo2) con distribución 3D/4M/3F.
-*/
+/* ---------- Distribución Opción A (6 por equipo / 12 por llave) ---------- */
+const poolP = questionsAll.slice(0,28);   // Principiante
+const poolI = questionsAll.slice(28,56);  // Intermedio
+const poolA = questionsAll.slice(56,84);  // Avanzado
 
-function takeAndFormat(arr, startIndex){
-  // toma 10 preguntas a partir de startIndex (reutiliza si se agota)
-  const out = [];
-  for(let i=0;i<10;i++){
-    const idx = (startIndex + i) % arr.length;
-    // si la pregunta tiene nivel 'Difícil' etc ya en arr, la mantenemos; si no, inferimos
-    const base = arr[idx];
-    out.push(base);
-  }
+// convert to queues (so we can remove used items)
+function toQueue(arr){ return arr.slice(); }
+let qP = toQueue(poolP), qI = toQueue(poolI), qA = toQueue(poolA);
+
+function takeFrom(q,n){
+  const out = q.splice(0,n);
   return out;
 }
 
-/* Para SF1: tomamos preguntas desde realPool[0..19] */
-const sf1_team1 = takeAndFormat(realPool, 0).map((q,i)=>{
-  // ajustamos niveles para garantizar 3D/4M/3F per team by manual assignment:
-  const levelOrder = [ 'Fácil','Fácil','Fácil','Intermedio','Intermedio','Intermedio','Intermedio','Difícil','Difícil','Difícil' ];
-  return { ...q, level: levelOrder[i] };
-});
-const sf1_team2 = takeAndFormat(realPool, 10).map((q,i)=>{
-  const levelOrder = [ 'Fácil','Fácil','Fácil','Intermedio','Intermedio','Intermedio','Intermedio','Difícil','Difícil','Difícil' ];
-  return { ...q, level: levelOrder[i] };
-});
-quizzes.sf1.questions = [...sf1_team1, ...sf1_team2];
+const quizzes = {
+  q1:{ id:'q1', teams:['Los Cotiquinos','Financiados y Asociados'], topic:'Presupuestos', questions:[] },
+  q2:{ id:'q2', teams:['Los Tarara','Money Squad'], topic:'Crédito', questions:[] },
+  q3:{ id:'q3', teams:['CashCrew','Capitalizados'], topic:'Ahorro', questions:[] },
+  q4:{ id:'q4', teams:['Capital Go Three','Dayro Moreno'], topic:'Inversión', questions:[] },
+  sf1:{ id:'sf1', teams:['Ganador Q1','Ganador Q2'], topic:'Riesgo & Deuda', questions:[] },
+  sf2:{ id:'sf2', teams:['Ganador Q3','Ganador Q4'], topic:'Seguros & Planificación', questions:[] },
+  f:{ id:'f', teams:['Ganador SF1','Ganador SF2'], topic:'Planificación a Largo Plazo', questions:[] }
+};
 
-/* SF2: usamos realPool desplazado */
-const sf2_team1 = takeAndFormat(realPool, 20).map((q,i)=>{
-  const levelOrder = [ 'Fácil','Fácil','Fácil','Intermedio','Intermedio','Intermedio','Intermedio','Difícil','Difícil','Difícil' ];
-  return { ...q, level: levelOrder[i] };
-});
-const sf2_team2 = takeAndFormat(realPool, 30).map((q,i)=>{
-  const levelOrder = [ 'Fácil','Fácil','Fácil','Intermedio','Intermedio','Intermedio','Intermedio','Difícil','Difícil','Difícil' ];
-  return { ...q, level: levelOrder[i] };
-});
-quizzes.sf2.questions = [...sf2_team1, ...sf2_team2];
+/* Fill quarters: per match team1:4P+2I ; team2:3P+3I */
+for(const k of ['q1','q2','q3','q4']){
+  const team1 = [...takeFrom(qP,4), ...takeFrom(qI,2)];
+  const team2 = [...takeFrom(qP,3), ...takeFrom(qI,3)];
+  quizzes[k].questions = [...team1, ...team2]; // 12 items
+}
 
-/* Final: usar otro bloque */
-const f_team1 = takeAndFormat(realPool, 40).map((q,i)=>{
-  const levelOrder = [ 'Fácil','Fácil','Fácil','Intermedio','Intermedio','Intermedio','Intermedio','Difícil','Difícil','Difícil' ];
-  return { ...q, level: levelOrder[i] };
-});
-const f_team2 = takeAndFormat(realPool, 50).map((q,i)=>{
-  const levelOrder = [ 'Fácil','Fácil','Fácil','Intermedio','Intermedio','Intermedio','Intermedio','Difícil','Difícil','Difícil' ];
-  return { ...q, level: levelOrder[i] };
-});
-quizzes.f.questions = [...f_team1, ...f_team2];
+/* Semifinales */
+quizzes.sf1.questions = [
+  ...takeFrom(qA,5), // sf1 team1 5A
+  ...takeFrom(qI,1), // +1I
+  ...takeFrom(qA,3), // sf1 team2 3A
+  ...takeFrom(qI,3)  // +3I
+];
 
-/* Sanity check: cada quiz debe tener 20 preguntas */
-Object.keys(quizzes).forEach(k=>{
-  if(!quizzes[k].questions || quizzes[k].questions.length !== 20){
-    console.warn('ALERTA: la llave',k,'tiene', (quizzes[k].questions||[]).length, 'preguntas');
+quizzes.sf2.questions = [
+  ...takeFrom(qA,3), // sf2 team1 3A
+  ...takeFrom(qI,3), // +3I
+  ...takeFrom(qA,5), // sf2 team2 5A
+  ...takeFrom(qI,1)  // +1I
+];
+
+/* Final: remaining 12 Avanzado */
+quizzes.f.questions = [
+  ...takeFrom(qA,6),
+  ...takeFrom(qA,6)
+];
+
+/* Basic validation */
+(function validate(){
+  let total=0;
+  for(const k in quizzes){
+    if(quizzes[k].questions.length !== 12) console.warn('Llave',k,'tiene',quizzes[k].questions.length,'preguntas (esperadas 12)');
+    total += quizzes[k].questions.length;
   }
-});
+  console.log('Total preguntas asignadas:', total); // should be 84
+})();
 
-/* ---------- Estado del bracket ---------- */
+/* ---------- Bracket state ---------- */
 const bracketState = {
   q1:{winner:null, scoreA:0, scoreB:0},
   q2:{winner:null, scoreC:0, scoreD:0},
@@ -436,147 +359,209 @@ const bracketState = {
   f:{winner:null}
 };
 
-/* ---------- UI y lógica del quiz con alternancia y pregunta-por-pregunta ---------- */
+/* ---------- UI & Logic: alternation + timer + skip + feedback toast ---------- */
 const modalBackdrop = document.getElementById('modalBackdrop');
 const modal = document.getElementById('modal');
 const modalTitle = document.getElementById('modalTitle');
 const modalSubtitle = document.getElementById('modalSubtitle');
 const quizContainer = document.getElementById('quizContainer');
 const closeModal = document.getElementById('closeModal');
-const prevBtn = document.getElementById('prevBtn');
+const timerDisplay = document.getElementById('timerDisplay');
+const skipBtn = document.getElementById('skipBtn');
 const nextBtn = document.getElementById('nextBtn');
 const submitQuiz = document.getElementById('submitQuiz');
 const progressText = document.getElementById('progressText');
+const teamText = document.getElementById('teamText');
+const numText = document.getElementById('numText');
+const toastEl = document.getElementById('toast');
 
 let currentMatchKey = null;
 let currentQuiz = null;
-let displayOrder = []; // order of indices 0..19 in alternated form
-let answers = new Array(20).fill(null); // store selected answers
-let currentIndex = 0; // pointer into displayOrder
+let answers = []; // 12 entries: 'a'|'b'|'c'|'d'|null|'skipped'
+let displayOrder = [];
+let currentPointer = 0;
+let timer = null;
+const TIME_PER_Q = 30;
+let timeLeft = TIME_PER_Q;
 
-/* Build alternated order: [0,10,1,11,2,12,...,9,19] */
-function buildAlternatedOrder(){
-  const order = [];
-  for(let i=0;i<10;i++){
-    order.push(i);
-    order.push(i+10);
-  }
-  return order;
-}
+/* build alternated order for 12 */
+function buildOrder12(){ const ord=[]; for(let i=0;i<6;i++){ ord.push(i); ord.push(i+6);} return ord; }
 
-/* Open quiz for matchKey */
-function openQuiz(matchKey){
-  currentMatchKey = matchKey;
-  currentQuiz = quizzes[matchKey];
-  if(!currentQuiz){ alert('No hay quiz asignado'); return; }
-  modalTitle.textContent = `Llave: ${matchKey.toUpperCase()} — ${currentQuiz.teams[0]} vs ${currentQuiz.teams[1]}`;
-  modalSubtitle.textContent = `Tema: ${currentQuiz.topic} — 20 preguntas (alternadas entre equipos)`;
-  answers = new Array(20).fill(null);
-  displayOrder = buildAlternatedOrder();
-  currentIndex = 0;
-  renderQuestionAtCurrent();
-  modalBackdrop.style.display = 'flex';
-  prevBtn.style.display = 'none';
-  nextBtn.style.display = 'inline-block';
-  submitQuiz.style.display = 'none';
-}
-
-/* Render question based on currentIndex */
-function renderQuestionAtCurrent(){
-  const qPos = displayOrder[currentIndex]; // index in 0..19
-  const qData = currentQuiz.questions[qPos];
-  const displayNumber = currentIndex + 1; // 1..20
+/* render current question */
+function renderCurrent(){
+  const idx = displayOrder[currentPointer];
+  const q = currentQuiz.questions[idx];
+  const isTeam1 = idx < 6;
+  const team = isTeam1 ? currentQuiz.teams[0] : currentQuiz.teams[1];
+  const qNumForTeam = isTeam1 ? (idx+1) : (idx-5);
   quizContainer.innerHTML = '';
-  const box = document.createElement('div');
-  box.className = 'qbox';
-  // Which team is this question for? if qPos<10 team1 else team2
-  const team = (qPos < 10) ? currentQuiz.teams[0] : currentQuiz.teams[1];
-  const qnumForTeam = (qPos < 10) ? (qPos+1) : (qPos-9); // show 1-10 per team
+  const box = document.createElement('div'); box.className='qbox';
   box.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center">
-                     <div><strong>Pregunta ${displayNumber} (Equipo: ${team} — N° ${qnumForTeam})</strong></div>
-                     <div class="small muted">Nivel: ${qData.level}</div>
-                   </div>
-                   <div style="margin-top:8px">${qData.text}</div>`;
-  const opts = document.createElement('div');
-  opts.className = 'options';
+    <div><strong>Pregunta ${currentPointer+1}/12 — Equipo: ${team}</strong></div>
+    <div class="small muted">Nivel: ${q.level}</div>
+  </div>
+  <div style="margin-top:8px">${q.text}</div>`;
+  const opts = document.createElement('div'); opts.className='options';
   ['a','b','c','d'].forEach(letter=>{
-    const label = document.createElement('label');
-    label.className = 'option';
-    label.innerHTML = `<input type="radio" name="qsel" value="${letter}"> <span><strong>${letter}.</strong> ${qData.options[letter]}</span>`;
-    // preselect if already answered
-    label.querySelector('input').addEventListener('change', ()=>{
-      answers[qPos] = letter;
+    const label = document.createElement('label'); label.className='option';
+    label.innerHTML = `<input type="radio" name="answer" value="${letter}"> <span><strong>${letter}.</strong> ${q.options[letter]}</span>`;
+    // when user selects, immediately evaluate
+    label.querySelector('input').addEventListener('change', (e)=>{
+      evaluateAnswer(idx, e.target.value);
     });
-    if(answers[qPos] === letter){
-      // set checked after insertion; we'll set attribute after element added
-      setTimeout(()=>{ label.querySelector('input').checked = true; }, 0);
-    }
     opts.appendChild(label);
   });
   box.appendChild(opts);
   quizContainer.appendChild(box);
-  progressText.textContent = `Pregunta ${displayNumber}/20`;
-  // prev/next visibility
-  prevBtn.style.display = (currentIndex === 0) ? 'none' : 'inline-block';
-  nextBtn.style.display = (currentIndex === 19) ? 'none' : 'inline-block';
-  submitQuiz.style.display = (currentIndex === 19) ? 'inline-block' : 'none';
+
+  progressText.textContent = `Pregunta ${currentPointer+1}/12`;
+  teamText.textContent = `Equipo: ${team}`;
+  numText.textContent = `N° para equipo: ${qNumForTeam}`;
+
+  // next/submit visibility handled; but with auto-advance we don't need next button except for manual flow
+  nextBtn.style.display = 'none';
+  submitQuiz.style.display = 'none';
+
+  // start timer
+  resetTimer();
+  startTimer();
 }
 
-/* Navigation */
-prevBtn.addEventListener('click', ()=>{
-  if(currentIndex > 0){ currentIndex--; renderQuestionAtCurrent(); }
-});
-nextBtn.addEventListener('click', ()=>{
-  if(currentIndex < 19){ currentIndex++; renderQuestionAtCurrent(); }
+/* Timer functions */
+function startTimer(){
+  timeLeft = TIME_PER_Q; timerDisplay.textContent = `${timeLeft}s`;
+  timer = setInterval(()=>{
+    timeLeft--; timerDisplay.textContent = `${timeLeft}s`;
+    if(timeLeft <= 0){
+      clearInterval(timer);
+      handleTimeout();
+    }
+  },1000);
+}
+function resetTimer(){ if(timer) clearInterval(timer); timeLeft = TIME_PER_Q; timerDisplay.textContent = `${timeLeft}s`; }
+
+/* Evaluate answer selected */
+function evaluateAnswer(qIndex, choice){
+  // stop timer
+  if(timer) clearInterval(timer);
+  // store answer
+  answers[qIndex] = choice;
+  const q = currentQuiz.questions[qIndex];
+  const correct = q.correct;
+  const isCorrect = (choice === correct);
+  // show toast with correct answer info
+  if(isCorrect){
+    showToast(`✔ Correcto — La respuesta era: ${correct.toUpperCase()}`, 'correct');
+  } else {
+    showToast(`✘ Incorrecto — La respuesta correcta era: ${correct.toUpperCase()}`, 'wrong');
+  }
+  // after toast duration, advance pointer
+  setTimeout(()=>{
+    advanceAfterFeedback();
+  },1500);
+}
+
+/* Handle timeout (auto-skip) */
+function handleTimeout(){
+  const idx = displayOrder[currentPointer];
+  answers[idx] = 'skipped';
+  const q = currentQuiz.questions[idx];
+  showToast(`⏭ Tiempo agotado — Respuesta: ${q.correct.toUpperCase()}`, 'skip');
+  setTimeout(()=>{ advanceAfterFeedback(); },1500);
+}
+
+/* Manual skip */
+skipBtn.addEventListener('click', ()=>{
+  if(confirm('¿Saltar esta pregunta? (Se perderán los puntos)')){
+    if(timer) clearInterval(timer);
+    const idx = displayOrder[currentPointer];
+    answers[idx] = 'skipped';
+    const q = currentQuiz.questions[idx];
+    showToast(`⏭ Pregunta saltada — Respuesta: ${q.correct.toUpperCase()}`, 'skip');
+    setTimeout(()=>{ advanceAfterFeedback(); },1500);
+  }
 });
 
-/* Submit: compute weighted scores and determine winner */
+/* Advance to next question or show submit */
+function advanceAfterFeedback(){
+  if(currentPointer < 11){
+    currentPointer++;
+    renderCurrent();
+  } else {
+    // end -> show submit button
+    quizContainer.innerHTML = '<div class="small muted">Has terminado las preguntas. Pulsa "Calcular ganador".</div>';
+    submitQuiz.style.display = 'inline-block';
+    timerDisplay.textContent = '—';
+  }
+}
+
+/* Toast display (position: just below question) */
+function showToast(message, type){
+  toastEl.textContent = message;
+  toastEl.className = 'toast show';
+  if(type === 'correct'){ toastEl.style.background = 'linear-gradient(90deg, rgba(46,180,101,0.95), rgba(32,160,95,0.95))'; }
+  else if(type === 'wrong'){ toastEl.style.background = 'linear-gradient(90deg, rgba(219,68,55,0.95), rgba(185,40,40,0.95))'; }
+  else { toastEl.style.background = 'linear-gradient(90deg, rgba(95,99,110,0.95), rgba(75,80,90,0.95))'; }
+  // ensure it's visible for 1.5s, then hide via class
+  setTimeout(()=>{ toastEl.className = 'toast'; }, 1500);
+}
+
+/* Submit quiz: calculate weighted scores, decide winner */
 submitQuiz.addEventListener('click', ()=>{
-  // compute scores
+  if(timer) clearInterval(timer);
   let score1 = 0, score2 = 0;
-  for(let i=0;i<20;i++){
+  for(let i=0;i<12;i++){
     const q = currentQuiz.questions[i];
     const ans = answers[i];
     if(ans && ans === q.correct){
       const w = WEIGHTS[q.level] || 1;
-      if(i < 10) score1 += w; else score2 += w;
+      if(i < 6) score1 += w; else score2 += w;
     }
   }
-  // determine winner with tie break
-  let winnerLabel = null;
-  if(score1 > score2) winnerLabel = currentQuiz.teams[0];
-  else if(score2 > score1) winnerLabel = currentQuiz.teams[1];
+  // determine winner
+  let winner = null;
+  if(score1 > score2) winner = currentQuiz.teams[0];
+  else if(score2 > score1) winner = currentQuiz.teams[1];
   else {
-    if(confirm('Empate. ¿Deseas desempatar aleatoriamente? (Ok = aleatorio, Cancel = manual)')){
-      winnerLabel = Math.random() < 0.5 ? currentQuiz.teams[0] : currentQuiz.teams[1];
+    if(confirm('Empate. ¿Desempatar aleatoriamente? OK = aleatorio, Cancel = elegir manualmente')){
+      winner = Math.random() < 0.5 ? currentQuiz.teams[0] : currentQuiz.teams[1];
     } else {
       const pick = prompt(`Empate. Escribe 1 para ${currentQuiz.teams[0]} o 2 para ${currentQuiz.teams[1]}`);
-      if(pick==='1') winnerLabel = currentQuiz.teams[0];
-      else if(pick==='2') winnerLabel = currentQuiz.teams[1];
-      else { alert('Entrada inválida. Se aplicará desempate aleatorio.'); winnerLabel = Math.random() < 0.5 ? currentQuiz.teams[0] : currentQuiz.teams[1]; }
+      if(pick==='1') winner = currentQuiz.teams[0];
+      else if(pick==='2') winner = currentQuiz.teams[1];
+      else { alert('Entrada inválida. Se aplicará desempate aleatorio.'); winner = Math.random()<0.5 ? currentQuiz.teams[0] : currentQuiz.teams[1]; }
     }
   }
 
-  // apply results to bracket (update UI)
-  applyResultToBracket(currentMatchKey, score1, score2, winnerLabel);
+  applyResultToBracket(currentMatchKey, score1, score2, winner);
   modalBackdrop.style.display = 'none';
 });
 
-/* click handlers: abrir modal al click (cuartos) o dblclick para semis/final */
+/* Open quiz (single click for quarters, dblclick for semis/final) */
 document.querySelectorAll('.match').forEach(el=>{
   const key = el.getAttribute('data-match');
   if(!key) return;
-  // For semifinal and final prefer double click to avoid accidental openings; for quarters single click
-  if(key.startsWith('q')){
-    el.addEventListener('click', ()=>openQuiz(key));
-  } else {
-    el.addEventListener('dblclick', ()=>openQuiz(key));
-  }
+  if(key.startsWith('q')) el.addEventListener('click', ()=>openQuiz(key));
+  else el.addEventListener('dblclick', ()=>openQuiz(key));
 });
 
-/* modal close */
-closeModal.addEventListener('click', ()=>{ modalBackdrop.style.display = 'none'; });
-modalBackdrop.addEventListener('click', (e)=>{ if(e.target === modalBackdrop) modalBackdrop.style.display='none'; });
+/* openQuiz implementation */
+function openQuiz(key){
+  currentMatchKey = key;
+  currentQuiz = quizzes[key];
+  if(!currentQuiz){ alert('Esa llave no tiene quiz asignado'); return; }
+  modalTitle.textContent = `Llave: ${key.toUpperCase()} — ${currentQuiz.teams[0]} vs ${currentQuiz.teams[1]}`;
+  modalSubtitle.textContent = `Tema: ${currentQuiz.topic} — 12 preguntas (6 por equipo) - Alternadas`;
+  answers = new Array(12).fill(null);
+  displayOrder = buildOrder12();
+  currentPointer = 0;
+  renderCurrent();
+  modalBackdrop.style.display = 'flex';
+}
+
+/* Close modal */
+closeModal.addEventListener('click', ()=>{ modalBackdrop.style.display = 'none'; if(timer) clearInterval(timer); });
+modalBackdrop.addEventListener('click', (e)=>{ if(e.target === modalBackdrop){ modalBackdrop.style.display='none'; if(timer) clearInterval(timer); } });
 
 /* applyResultToBracket updates UI and propagates winners */
 function applyResultToBracket(matchKey, s1, s2, winnerLabel){
@@ -600,7 +585,6 @@ function applyResultToBracket(matchKey, s1, s2, winnerLabel){
     document.getElementById('score-sf1-1').textContent = s1;
     document.getElementById('score-sf1-2').textContent = s2;
     bracketState.sf1.winner = winnerLabel;
-    // place into final slot
     document.getElementById('f-team1').querySelector('.team-name').textContent = winnerLabel;
     document.getElementById('score-f-1').textContent = '—';
   } else if(matchKey==='sf2'){
@@ -616,31 +600,20 @@ function applyResultToBracket(matchKey, s1, s2, winnerLabel){
     setTimeout(()=>alert(`¡Campeón del torneo: ${winnerLabel}!`),200);
   }
 
-  // mark winner visually in source match UI
   markWinnerInMatchUI(matchKey, winnerLabel);
-  // propagate quarters to semis placeholders
   propagateQuarterToSemi();
 }
 
-/* propagate quarter winners to semis placeholders */
+/* Propagate quarter winners */
 function propagateQuarterToSemi(){
-  if(bracketState.q1.winner){
-    document.getElementById('sf1-team1').querySelector('.team-name').textContent = bracketState.q1.winner;
-  }
-  if(bracketState.q2.winner){
-    document.getElementById('sf1-team2').querySelector('.team-name').textContent = bracketState.q2.winner;
-  }
-  if(bracketState.q3.winner){
-    document.getElementById('sf2-team1').querySelector('.team-name').textContent = bracketState.q3.winner;
-  }
-  if(bracketState.q4.winner){
-    document.getElementById('sf2-team2').querySelector('.team-name').textContent = bracketState.q4.winner;
-  }
+  if(bracketState.q1.winner) document.getElementById('sf1-team1').querySelector('.team-name').textContent = bracketState.q1.winner;
+  if(bracketState.q2.winner) document.getElementById('sf1-team2').querySelector('.team-name').textContent = bracketState.q2.winner;
+  if(bracketState.q3.winner) document.getElementById('sf2-team1').querySelector('.team-name').textContent = bracketState.q3.winner;
+  if(bracketState.q4.winner) document.getElementById('sf2-team2').querySelector('.team-name').textContent = bracketState.q4.winner;
 }
 
-/* mark winner visually */
+/* Visual winner marker */
 function markWinnerInMatchUI(matchKey, winner){
-  // simple: find the match element and apply .winner to the team-row matching text
   const matchEl = document.querySelector(`[data-match="${matchKey}"]`);
   if(matchEl){
     matchEl.querySelectorAll('.team-row').forEach(r=>r.classList.remove('winner'));
@@ -649,7 +622,6 @@ function markWinnerInMatchUI(matchKey, winner){
       if(nm === winner) r.classList.add('winner');
     });
   }
-  // also try in semifinal/final placeholders
   document.querySelectorAll('.final-box').forEach(box=>{
     box.querySelectorAll('.team-row').forEach(r=>r.classList.remove('winner'));
     box.querySelectorAll('.team-row').forEach(r=>{
@@ -662,9 +634,7 @@ function markWinnerInMatchUI(matchKey, winner){
 /* Reset */
 document.getElementById('resetBtn').addEventListener('click', ()=>{
   if(!confirm('¿Seguro que deseas resetear todo el bracket?')) return;
-  // reset state
   for(const k in bracketState) bracketState[k] = { winner:null };
-  // clear visible scores and names to initial
   document.getElementById('score-q1-A').textContent='—'; document.getElementById('score-q1-B').textContent='—';
   document.getElementById('score-q2-C').textContent='—'; document.getElementById('score-q2-D').textContent='—';
   document.getElementById('score-q3-E').textContent='—'; document.getElementById('score-q3-F').textContent='—';
@@ -681,8 +651,7 @@ document.getElementById('resetBtn').addEventListener('click', ()=>{
   document.getElementById('score-f-1').textContent='—'; document.getElementById('score-f-2').textContent='—';
 });
 
-/* Initialize: allow opening SF and Final with dblclick already set in listener above */
-
+/* Debug */
 console.log('Quizzes cargados:', Object.keys(quizzes).length);
 </script>
 </body>
