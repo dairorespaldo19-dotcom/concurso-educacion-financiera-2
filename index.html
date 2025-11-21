@@ -3,15 +3,12 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Bracket Interactivo - Torneo Educación Financiera (con feedback)</title>
+<title>Bracket Interactivo - Torneo Educación Financiera (Final)</title>
 <style>
   :root{
     --bg:#061221; --card:#0b2030;
     --accent-blue:#1e90ff; --accent-green:#2dd4bf;
     --muted:#9aa9b2; --glass: rgba(255,255,255,0.03);
-    --toast-correct: #1f7a2f;
-    --toast-wrong: #9b2b2b;
-    --toast-skip: #555b66;
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;background:linear-gradient(180deg,#041322,#02121a);color:#eaf6f8}
@@ -42,7 +39,6 @@
   label.option{display:flex;gap:12px;align-items:center;cursor:pointer}
   input[type="radio"]{accent-color:var(--accent-blue)}
   .controls{display:flex;gap:8px;justify-content:space-between;align-items:center;margin-top:10px}
-  .timer{font-weight:800;padding:6px 10px;border-radius:8px;background:rgba(255,255,255,0.02);font-size:14px}
   .small{font-size:13px;color:var(--muted)}
   /* Toast (feedback) just below question */
   .toast-wrap{display:flex;justify-content:center;margin-top:6px;min-height:28px}
@@ -59,7 +55,7 @@
   <div class="header">
     <div>
       <h1>Bracket Interactivo — Torneo Educación Financiera</h1>
-      <div class="muted">Formato: 6 preguntas por equipo / 12 por llave · 30s por pregunta · feedback visible debajo de la pregunta.</div>
+      <div class="muted">Formato: 6 preguntas por equipo / 12 por llave · Sin temporizador · Feedback debajo de la pregunta.</div>
     </div>
     <div style="display:flex;gap:10px;align-items:center">
       <div class="muted small">Ponderación: Principiante=1 · Intermedio=2 · Avanzado=3</div>
@@ -73,10 +69,10 @@
 
       <div class="match" data-match="q1" id="match-q1">
         <div style="display:flex;justify-content:space-between;align-items:center">
-          <strong>Llave 1 — Los Cotiquinos vs Financiados y Asociados</strong><span class="small">Tema: Presupuestos</span>
+          <strong>Llave 1 — Las Catiquinas vs Financiados y Asociados</strong><span class="small">Tema: Presupuestos</span>
         </div>
         <div class="teams">
-          <div class="team-row" data-team="Los Cotiquinos"><div class="team-name">Los Cotiquinos</div><div class="team-score" id="score-q1-A">—</div></div>
+          <div class="team-row" data-team="Las Catiquinas"><div class="team-name">Las Catiquinas</div><div class="team-score" id="score-q1-A">—</div></div>
           <div class="team-row" data-team="Financiados y Asociados"><div class="team-name">Financiados y Asociados</div><div class="team-score" id="score-q1-B">—</div></div>
         </div>
       </div>
@@ -117,7 +113,7 @@
 
       <div class="center-match" id="match-sf1">
         <div class="final-box match" data-match="sf1" id="match-sf1-box">
-          <strong>SF1 — Ganador Q1 vs Ganador Q2</strong>
+          <strong id="sf1-title">SF1 — Ganador Q1 vs Ganador Q2</strong>
           <div class="teams" style="margin-top:8px">
             <div class="team-row" id="sf1-team1"><div class="team-name">—</div><div class="team-score" id="score-sf1-1">—</div></div>
             <div class="team-row" id="sf1-team2"><div class="team-name">—</div><div class="team-score" id="score-sf1-2">—</div></div>
@@ -127,7 +123,7 @@
 
       <div class="center-match" id="match-sf2">
         <div class="final-box match" data-match="sf2" id="match-sf2-box">
-          <strong>SF2 — Ganador Q3 vs Ganador Q4</strong>
+          <strong id="sf2-title">SF2 — Ganador Q3 vs Ganador Q4</strong>
           <div class="teams" style="margin-top:8px">
             <div class="team-row" id="sf2-team1"><div class="team-name">—</div><div class="team-score" id="score-sf2-1">—</div></div>
             <div class="team-row" id="sf2-team2"><div class="team-name">—</div><div class="team-score" id="score-sf2-2">—</div></div>
@@ -139,14 +135,14 @@
     <div class="col">
       <div class="round-title">Final</div>
       <div class="final-box match" data-match="f" id="match-f">
-        <strong>Final — Ganador SF1 vs Ganador SF2</strong>
+        <strong id="f-title">Final — Ganador SF1 vs Ganador SF2</strong>
         <div class="teams" style="margin-top:8px">
           <div class="team-row" id="f-team1"><div class="team-name">—</div><div class="team-score" id="score-f-1">—</div></div>
           <div class="team-row" id="f-team2"><div class="team-name">—</div><div class="team-score" id="score-f-2">—</div></div>
         </div>
       </div>
       <div style="height:14px"></div>
-      <div class="muted small" style="margin-top:10px">Instrucciones: haz clic (o doble clic en semis/final) para iniciar. 30s por pregunta. Feedback justo debajo de la pregunta.</div>
+      <div class="muted small" style="margin-top:10px">Instrucciones: haz clic (o doble clic en semis/final) para iniciar. No hay temporizador; pulsa "Saltar" si no responden.</div>
     </div>
   </div>
 </div>
@@ -160,10 +156,10 @@
     </div>
 
     <div class="quiz-body" id="quizContainer">
-      <!-- Pregunta única y opciones aparecenderán aquí -->
+      <!-- Pregunta única y opciones aparecerán aquí -->
     </div>
 
-    <!-- TOAST area: justo debajo de la pregunta (Opción 5) -->
+    <!-- TOAST area: justo debajo de la pregunta -->
     <div class="toast-wrap"><div id="toast" class="toast" aria-live="polite"></div></div>
 
     <div class="controls" style="padding:10px;">
@@ -173,9 +169,7 @@
         <div id="numText" class="small">N° para equipo: —</div>
       </div>
       <div style="display:flex;gap:10px;align-items:center">
-        <div class="timer" id="timerDisplay">30s</div>
         <button id="skipBtn" class="btn" style="background:rgba(255,255,255,0.06);color:#eaf6f8">Saltar pregunta</button>
-        <button id="nextBtn" class="btn" style="display:none">Siguiente</button>
         <button id="submitQuiz" class="btn" style="display:none;background:linear-gradient(90deg,var(--accent-green),var(--accent-blue));">Calcular ganador</button>
       </div>
     </div>
@@ -184,8 +178,8 @@
 
 <script>
 /*
-  Fuente del banco de preguntas (archivo subido): /mnt/data/Preguntas educacion financiera.docx
-  (Ruta local usada como referencia). :contentReference[oaicite:1]{index=1}
+  Fuente: banco de preguntas subido por el usuario (local): /mnt/data/Preguntas educacion financiera.docx
+  (Ruta local incluida como referencia). :contentReference[oaicite:0]{index=0}
 */
 
 /* Ponderaciones */
@@ -194,7 +188,7 @@ const WEIGHTS = { 'Principiante':1, 'Intermedio':2, 'Avanzado':3 };
 /* Helper para preguntas */
 function makeQ(text,a,b,c,d,correct,level){ return { text, options:{a,b,c,d}, correct, level }; }
 
-/* 84 preguntas (idénticas a las del documento) */
+/* --- Las 84 preguntas (idénticas a las del documento) --- */
 const questionsAll = [
 /* 1 */ makeQ('¿Cuál es el propósito esencial de un fondo de emergencia?','Cubrir gastos imprevistos que afecten tu estabilidad financiera.','Acumular capital para futuras inversiones rentables.','Mantener liquidez para aprovechar oportunidades de negocio.','Guardar dinero para gastos planificados de mediano plazo.','a','Principiante'),
 /* 2 */ makeQ('El APR (Tasa Porcentual Anual) en un crédito refleja:','Únicamente la tasa de interés nominal del préstamo.','El costo total anualizado incluyendo intereses y cargos adicionales.','El monto total que debes devolver al finalizar el plazo.','El porcentaje de tu ingreso comprometido en el pago.','b','Principiante'),
@@ -286,22 +280,32 @@ const questionsAll = [
  /*84*/ makeQ('Un Certificado de Inversión indexado es atractivo porque:','Está completamente libre de impuestos siempre.','Equivale a un préstamo sin garantías.','Sus rendimientos suelen ajustarse con la inflación.','Utiliza únicamente interés simple en su cálculo.','c','Avanzado')
 ];
 
-/* ---------- Distribución Opción A (6 por equipo / 12 por llave) ---------- */
-const poolP = questionsAll.slice(0,28);   // Principiante
-const poolI = questionsAll.slice(28,56);  // Intermedio
-const poolA = questionsAll.slice(56,84);  // Avanzado
+/* ---------- Distribución Opción B (aleatoria dentro de niveles) ---------- */
 
-// convert to queues (so we can remove used items)
-function toQueue(arr){ return arr.slice(); }
-let qP = toQueue(poolP), qI = toQueue(poolI), qA = toQueue(poolA);
+/* Shuffle helper (Fisher-Yates) */
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+}
 
-function takeFrom(q,n){
-  const out = q.splice(0,n);
+/* Pools por nivel */
+let poolP = questionsAll.slice(0,28).map(q=>Object.assign({},q));
+let poolI = questionsAll.slice(28,56).map(q=>Object.assign({},q));
+let poolA = questionsAll.slice(56,84).map(q=>Object.assign({},q));
+
+shuffle(poolP); shuffle(poolI); shuffle(poolA);
+
+/* Helper to take n items from pool */
+function take(pool, n){
+  const out = pool.splice(0,n);
   return out;
 }
 
+/* Quizzes object */
 const quizzes = {
-  q1:{ id:'q1', teams:['Los Cotiquinos','Financiados y Asociados'], topic:'Presupuestos', questions:[] },
+  q1:{ id:'q1', teams:['Las Catiquinas','Financiados y Asociados'], topic:'Presupuestos', questions:[] },
   q2:{ id:'q2', teams:['Los Tarara','Money Squad'], topic:'Crédito', questions:[] },
   q3:{ id:'q3', teams:['CashCrew','Capitalizados'], topic:'Ahorro', questions:[] },
   q4:{ id:'q4', teams:['Capital Go Three','Dayro Moreno'], topic:'Inversión', questions:[] },
@@ -310,42 +314,42 @@ const quizzes = {
   f:{ id:'f', teams:['Ganador SF1','Ganador SF2'], topic:'Planificación a Largo Plazo', questions:[] }
 };
 
-/* Fill quarters: per match team1:4P+2I ; team2:3P+3I */
-for(const k of ['q1','q2','q3','q4']){
-  const team1 = [...takeFrom(qP,4), ...takeFrom(qI,2)];
-  const team2 = [...takeFrom(qP,3), ...takeFrom(qI,3)];
-  quizzes[k].questions = [...team1, ...team2]; // 12 items
-}
+/* Fill quarters randomly but controlled:
+   For each quarter:
+     team1: 4 Principiante + 2 Intermedio
+     team2: 3 Principiante + 3 Intermedio
+*/
+['q1','q2','q3','q4'].forEach(k=>{
+  const team1 = [...take(poolP,4), ...take(poolI,2)];
+  const team2 = [...take(poolP,3), ...take(poolI,3)];
+  quizzes[k].questions = [...team1, ...team2]; // 12 questions
+});
 
-/* Semifinales */
+/* Semifinales (use remaining pools):
+   sf1: team1 -> 5A + 1I ; team2 -> 3A + 3I
+   sf2: team1 -> 3A + 3I ; team2 -> 5A + 1I
+*/
 quizzes.sf1.questions = [
-  ...takeFrom(qA,5), // sf1 team1 5A
-  ...takeFrom(qI,1), // +1I
-  ...takeFrom(qA,3), // sf1 team2 3A
-  ...takeFrom(qI,3)  // +3I
+  ...take(poolA,5), ...take(poolI,1),
+  ...take(poolA,3), ...take(poolI,3)
 ];
-
 quizzes.sf2.questions = [
-  ...takeFrom(qA,3), // sf2 team1 3A
-  ...takeFrom(qI,3), // +3I
-  ...takeFrom(qA,5), // sf2 team2 5A
-  ...takeFrom(qI,1)  // +1I
+  ...take(poolA,3), ...take(poolI,3),
+  ...take(poolA,5), ...take(poolI,1)
 ];
-
 /* Final: remaining 12 Avanzado */
 quizzes.f.questions = [
-  ...takeFrom(qA,6),
-  ...takeFrom(qA,6)
+  ...take(poolA,6), ...take(poolA,6)
 ];
 
-/* Basic validation */
+/* Validate counts quickly */
 (function validate(){
   let total=0;
   for(const k in quizzes){
-    if(quizzes[k].questions.length !== 12) console.warn('Llave',k,'tiene',quizzes[k].questions.length,'preguntas (esperadas 12)');
+    if(quizzes[k].questions.length !== 12) console.warn('Llave',k,'tiene',quizzes[k].questions.length,'preguntas (debe ser 12)');
     total += quizzes[k].questions.length;
   }
-  console.log('Total preguntas asignadas:', total); // should be 84
+  console.log('Total preguntas asignadas:', total);
 })();
 
 /* ---------- Bracket state ---------- */
@@ -359,16 +363,14 @@ const bracketState = {
   f:{winner:null}
 };
 
-/* ---------- UI & Logic: alternation + timer + skip + feedback toast ---------- */
+/* ---------- UI & Logic: alternation + skip + feedback (no timer) ---------- */
 const modalBackdrop = document.getElementById('modalBackdrop');
 const modal = document.getElementById('modal');
 const modalTitle = document.getElementById('modalTitle');
 const modalSubtitle = document.getElementById('modalSubtitle');
 const quizContainer = document.getElementById('quizContainer');
 const closeModal = document.getElementById('closeModal');
-const timerDisplay = document.getElementById('timerDisplay');
 const skipBtn = document.getElementById('skipBtn');
-const nextBtn = document.getElementById('nextBtn');
 const submitQuiz = document.getElementById('submitQuiz');
 const progressText = document.getElementById('progressText');
 const teamText = document.getElementById('teamText');
@@ -377,14 +379,11 @@ const toastEl = document.getElementById('toast');
 
 let currentMatchKey = null;
 let currentQuiz = null;
-let answers = []; // 12 entries: 'a'|'b'|'c'|'d'|null|'skipped'
+let answers = []; // 12 entries
 let displayOrder = [];
 let currentPointer = 0;
-let timer = null;
-const TIME_PER_Q = 30;
-let timeLeft = TIME_PER_Q;
 
-/* build alternated order for 12 */
+/* alternated order for 12: 0,6,1,7,2,8,3,9,4,10,5,11 */
 function buildOrder12(){ const ord=[]; for(let i=0;i<6;i++){ ord.push(i); ord.push(i+6);} return ord; }
 
 /* render current question */
@@ -405,7 +404,6 @@ function renderCurrent(){
   ['a','b','c','d'].forEach(letter=>{
     const label = document.createElement('label'); label.className='option';
     label.innerHTML = `<input type="radio" name="answer" value="${letter}"> <span><strong>${letter}.</strong> ${q.options[letter]}</span>`;
-    // when user selects, immediately evaluate
     label.querySelector('input').addEventListener('change', (e)=>{
       evaluateAnswer(idx, e.target.value);
     });
@@ -418,62 +416,27 @@ function renderCurrent(){
   teamText.textContent = `Equipo: ${team}`;
   numText.textContent = `N° para equipo: ${qNumForTeam}`;
 
-  // next/submit visibility handled; but with auto-advance we don't need next button except for manual flow
-  nextBtn.style.display = 'none';
+  // hide submit until end
   submitQuiz.style.display = 'none';
-
-  // start timer
-  resetTimer();
-  startTimer();
 }
 
-/* Timer functions */
-function startTimer(){
-  timeLeft = TIME_PER_Q; timerDisplay.textContent = `${timeLeft}s`;
-  timer = setInterval(()=>{
-    timeLeft--; timerDisplay.textContent = `${timeLeft}s`;
-    if(timeLeft <= 0){
-      clearInterval(timer);
-      handleTimeout();
-    }
-  },1000);
-}
-function resetTimer(){ if(timer) clearInterval(timer); timeLeft = TIME_PER_Q; timerDisplay.textContent = `${timeLeft}s`; }
-
-/* Evaluate answer selected */
+/* Evaluate when user selects an option */
 function evaluateAnswer(qIndex, choice){
-  // stop timer
-  if(timer) clearInterval(timer);
-  // store answer
   answers[qIndex] = choice;
   const q = currentQuiz.questions[qIndex];
   const correct = q.correct;
   const isCorrect = (choice === correct);
-  // show toast with correct answer info
   if(isCorrect){
     showToast(`✔ Correcto — La respuesta era: ${correct.toUpperCase()}`, 'correct');
   } else {
     showToast(`✘ Incorrecto — La respuesta correcta era: ${correct.toUpperCase()}`, 'wrong');
   }
-  // after toast duration, advance pointer
-  setTimeout(()=>{
-    advanceAfterFeedback();
-  },1500);
-}
-
-/* Handle timeout (auto-skip) */
-function handleTimeout(){
-  const idx = displayOrder[currentPointer];
-  answers[idx] = 'skipped';
-  const q = currentQuiz.questions[idx];
-  showToast(`⏭ Tiempo agotado — Respuesta: ${q.correct.toUpperCase()}`, 'skip');
   setTimeout(()=>{ advanceAfterFeedback(); },1500);
 }
 
-/* Manual skip */
+/* Skip button */
 skipBtn.addEventListener('click', ()=>{
-  if(confirm('¿Saltar esta pregunta? (Se perderán los puntos)')){
-    if(timer) clearInterval(timer);
+  if(confirm('¿Saltar esta pregunta? (La pregunta no sumará puntos)')){
     const idx = displayOrder[currentPointer];
     answers[idx] = 'skipped';
     const q = currentQuiz.questions[idx];
@@ -482,33 +445,29 @@ skipBtn.addEventListener('click', ()=>{
   }
 });
 
-/* Advance to next question or show submit */
+/* Advance to next or end */
 function advanceAfterFeedback(){
   if(currentPointer < 11){
     currentPointer++;
     renderCurrent();
   } else {
-    // end -> show submit button
     quizContainer.innerHTML = '<div class="small muted">Has terminado las preguntas. Pulsa "Calcular ganador".</div>';
     submitQuiz.style.display = 'inline-block';
-    timerDisplay.textContent = '—';
   }
 }
 
-/* Toast display (position: just below question) */
+/* Toast display */
 function showToast(message, type){
   toastEl.textContent = message;
   toastEl.className = 'toast show';
   if(type === 'correct'){ toastEl.style.background = 'linear-gradient(90deg, rgba(46,180,101,0.95), rgba(32,160,95,0.95))'; }
   else if(type === 'wrong'){ toastEl.style.background = 'linear-gradient(90deg, rgba(219,68,55,0.95), rgba(185,40,40,0.95))'; }
   else { toastEl.style.background = 'linear-gradient(90deg, rgba(95,99,110,0.95), rgba(75,80,90,0.95))'; }
-  // ensure it's visible for 1.5s, then hide via class
   setTimeout(()=>{ toastEl.className = 'toast'; }, 1500);
 }
 
-/* Submit quiz: calculate weighted scores, decide winner */
+/* Submit quiz: compute weighted scores */
 submitQuiz.addEventListener('click', ()=>{
-  if(timer) clearInterval(timer);
   let score1 = 0, score2 = 0;
   for(let i=0;i<12;i++){
     const q = currentQuiz.questions[i];
@@ -518,7 +477,6 @@ submitQuiz.addEventListener('click', ()=>{
       if(i < 6) score1 += w; else score2 += w;
     }
   }
-  // determine winner
   let winner = null;
   if(score1 > score2) winner = currentQuiz.teams[0];
   else if(score2 > score1) winner = currentQuiz.teams[1];
@@ -529,7 +487,7 @@ submitQuiz.addEventListener('click', ()=>{
       const pick = prompt(`Empate. Escribe 1 para ${currentQuiz.teams[0]} o 2 para ${currentQuiz.teams[1]}`);
       if(pick==='1') winner = currentQuiz.teams[0];
       else if(pick==='2') winner = currentQuiz.teams[1];
-      else { alert('Entrada inválida. Se aplicará desempate aleatorio.'); winner = Math.random()<0.5 ? currentQuiz.teams[0] : currentQuiz.teams[1]; }
+      else { alert('Entrada inválida. Se aplicará desempate aleatorio.'); winner = Math.random() < 0.5 ? currentQuiz.teams[0] : currentQuiz.teams[1]; }
     }
   }
 
@@ -537,7 +495,7 @@ submitQuiz.addEventListener('click', ()=>{
   modalBackdrop.style.display = 'none';
 });
 
-/* Open quiz (single click for quarters, dblclick for semis/final) */
+/* Open quiz: single click for quarters, dblclick for semis/final */
 document.querySelectorAll('.match').forEach(el=>{
   const key = el.getAttribute('data-match');
   if(!key) return;
@@ -560,10 +518,10 @@ function openQuiz(key){
 }
 
 /* Close modal */
-closeModal.addEventListener('click', ()=>{ modalBackdrop.style.display = 'none'; if(timer) clearInterval(timer); });
-modalBackdrop.addEventListener('click', (e)=>{ if(e.target === modalBackdrop){ modalBackdrop.style.display='none'; if(timer) clearInterval(timer); } });
+closeModal.addEventListener('click', ()=>{ modalBackdrop.style.display = 'none'; });
+modalBackdrop.addEventListener('click', (e)=>{ if(e.target === modalBackdrop) modalBackdrop.style.display='none'; });
 
-/* applyResultToBracket updates UI and propagates winners */
+/* applyResultToBracket updates UI and propagates winners (showing real names) */
 function applyResultToBracket(matchKey, s1, s2, winnerLabel){
   if(matchKey==='q1'){
     document.getElementById('score-q1-A').textContent = s1;
@@ -585,12 +543,14 @@ function applyResultToBracket(matchKey, s1, s2, winnerLabel){
     document.getElementById('score-sf1-1').textContent = s1;
     document.getElementById('score-sf1-2').textContent = s2;
     bracketState.sf1.winner = winnerLabel;
+    // Put actual name in final slot 1
     document.getElementById('f-team1').querySelector('.team-name').textContent = winnerLabel;
     document.getElementById('score-f-1').textContent = '—';
   } else if(matchKey==='sf2'){
     document.getElementById('score-sf2-1').textContent = s1;
     document.getElementById('score-sf2-2').textContent = s2;
     bracketState.sf2.winner = winnerLabel;
+    // Put actual name in final slot 2
     document.getElementById('f-team2').querySelector('.team-name').textContent = winnerLabel;
     document.getElementById('score-f-2').textContent = '—';
   } else if(matchKey==='f'){
@@ -600,16 +560,55 @@ function applyResultToBracket(matchKey, s1, s2, winnerLabel){
     setTimeout(()=>alert(`¡Campeón del torneo: ${winnerLabel}!`),200);
   }
 
+  // Mark winner visually where the match took place
   markWinnerInMatchUI(matchKey, winnerLabel);
+  // propagate to semis if quarters were just resolved
   propagateQuarterToSemi();
 }
 
-/* Propagate quarter winners */
+/* propagate quarter winners to semifinal placeholders showing the actual names */
 function propagateQuarterToSemi(){
-  if(bracketState.q1.winner) document.getElementById('sf1-team1').querySelector('.team-name').textContent = bracketState.q1.winner;
-  if(bracketState.q2.winner) document.getElementById('sf1-team2').querySelector('.team-name').textContent = bracketState.q2.winner;
-  if(bracketState.q3.winner) document.getElementById('sf2-team1').querySelector('.team-name').textContent = bracketState.q3.winner;
-  if(bracketState.q4.winner) document.getElementById('sf2-team2').querySelector('.team-name').textContent = bracketState.q4.winner;
+  if(bracketState.q1.winner) {
+    document.getElementById('sf1-team1').querySelector('.team-name').textContent = bracketState.q1.winner;
+    document.getElementById('sf1-title').textContent = `SF1 — ${bracketState.q1.winner} vs ${ bracketState.q2.winner ? bracketState.q2.winner : 'Ganador Q2'}`;
+    // set team names in the quiz object for SF1 if both are available
+    if(quizzes.sf1){
+      if(bracketState.q1.winner) quizzes.sf1.teams[0] = bracketState.q1.winner;
+    }
+  }
+  if(bracketState.q2.winner) {
+    document.getElementById('sf1-team2').querySelector('.team-name').textContent = bracketState.q2.winner;
+    document.getElementById('sf1-title').textContent = `SF1 — ${ bracketState.q1.winner ? bracketState.q1.winner : 'Ganador Q1'} vs ${bracketState.q2.winner}`;
+    if(quizzes.sf1){
+      if(bracketState.q2.winner) quizzes.sf1.teams[1] = bracketState.q2.winner;
+    }
+  }
+  if(bracketState.q3.winner) {
+    document.getElementById('sf2-team1').querySelector('.team-name').textContent = bracketState.q3.winner;
+    document.getElementById('sf2-title').textContent = `SF2 — ${bracketState.q3.winner} vs ${ bracketState.q4.winner ? bracketState.q4.winner : 'Ganador Q4'}`;
+    if(quizzes.sf2){
+      if(bracketState.q3.winner) quizzes.sf2.teams[0] = bracketState.q3.winner;
+    }
+  }
+  if(bracketState.q4.winner) {
+    document.getElementById('sf2-team2').querySelector('.team-name').textContent = bracketState.q4.winner;
+    document.getElementById('sf2-title').textContent = `SF2 — ${ bracketState.q3.winner ? bracketState.q3.winner : 'Ganador Q3'} vs ${bracketState.q4.winner}`;
+    if(quizzes.sf2){
+      if(bracketState.q4.winner) quizzes.sf2.teams[1] = bracketState.q4.winner;
+    }
+  }
+
+  // If semis winners are known, update final title and quiz teams accordingly
+  if(bracketState.sf1.winner){
+    document.getElementById('f-team1').querySelector('.team-name').textContent = bracketState.sf1.winner;
+    document.getElementById('f-title').textContent = `Final — ${bracketState.sf1.winner} vs ${ bracketState.sf2.winner ? bracketState.sf2.winner : 'Ganador SF2'}`;
+    if(quizzes.f) quizzes.f.teams[0] = bracketState.sf1.winner;
+  }
+  if(bracketState.sf2.winner){
+    document.getElementById('f-team2').querySelector('.team-name').textContent = bracketState.sf2.winner;
+    document.getElementById('f-title').textContent = `Final — ${ bracketState.sf1.winner ? bracketState.sf1.winner : 'Ganador SF1'} vs ${bracketState.sf2.winner}`;
+    if(quizzes.f) quizzes.f.teams[1] = bracketState.sf2.winner;
+  }
 }
 
 /* Visual winner marker */
@@ -651,8 +650,8 @@ document.getElementById('resetBtn').addEventListener('click', ()=>{
   document.getElementById('score-f-1').textContent='—'; document.getElementById('score-f-2').textContent='—';
 });
 
-/* Debug */
-console.log('Quizzes cargados:', Object.keys(quizzes).length);
+/* Debug log */
+console.log('Quizzes list:', Object.keys(quizzes));
 </script>
 </body>
 </html>
