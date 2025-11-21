@@ -47,6 +47,10 @@
     box-shadow:0 6px 18px rgba(0,0,0,0.5);opacity:0;transform:translateY(8px);transition:opacity .25s,transform .25s;
   }
   .toast.show{opacity:1;transform:translateY(0);}
+  /* tie breaker styling */
+  #tie-breaker{margin-top:14px;padding:10px;border-top:1px solid rgba(255,255,255,0.06);display:flex;flex-direction:column;gap:8px}
+  #tie-breaker .btn{flex:1;padding:10px}
+  .tie-row{display:flex;gap:12px}
   @media (max-width:980px){.bracket{grid-template-columns:1fr}}
 </style>
 </head>
@@ -178,8 +182,9 @@
 
 <script>
 /*
-  Fuente: banco de preguntas subido por el usuario (local): /mnt/data/Preguntas educacion financiera.docx
-  (Ruta local incluida como referencia). :contentReference[oaicite:0]{index=0}
+  Banco de preguntas utilizado (archivo subido por el usuario):
+  /mnt/data/Preguntas educacion financiera.docx
+  :contentReference[oaicite:0]{index=0}
 */
 
 /* Ponderaciones */
@@ -188,7 +193,7 @@ const WEIGHTS = { 'Principiante':1, 'Intermedio':2, 'Avanzado':3 };
 /* Helper para preguntas */
 function makeQ(text,a,b,c,d,correct,level){ return { text, options:{a,b,c,d}, correct, level }; }
 
-/* --- Las 84 preguntas (idénticas a las del documento) --- */
+/* --- Las 84 preguntas (extraídas del docx) --- */
 const questionsAll = [
 /* 1 */ makeQ('¿Cuál es el propósito esencial de un fondo de emergencia?','Cubrir gastos imprevistos que afecten tu estabilidad financiera.','Acumular capital para futuras inversiones rentables.','Mantener liquidez para aprovechar oportunidades de negocio.','Guardar dinero para gastos planificados de mediano plazo.','a','Principiante'),
 /* 2 */ makeQ('El APR (Tasa Porcentual Anual) en un crédito refleja:','Únicamente la tasa de interés nominal del préstamo.','El costo total anualizado incluyendo intereses y cargos adicionales.','El monto total que debes devolver al finalizar el plazo.','El porcentaje de tu ingreso comprometido en el pago.','b','Principiante'),
@@ -218,66 +223,62 @@ const questionsAll = [
 /*26*/ makeQ('Una ventaja práctica de utilizar cajeros automáticos es:','Otorgan préstamos automáticos sin evaluación previa.','Reducen el tiempo de espera en filas de sucursales.','Operan exclusivamente durante horarios nocturnos.','No requieren el uso de tarjetas bancarias.','b','Principiante'),
 /*27*/ makeQ('En educación financiera, la gestión adecuada del dinero implica:','Utilizar crédito para financiar todos los gastos.','Ignorar los gastos pequeños y frecuentes.','Organizar ingresos y gastos de forma sistemática.','Ahorrar únicamente cuando sobra dinero al final del mes.','c','Principiante'),
 /*28*/ makeQ('El periodo sin obligación de pago inmediatamente después de recibir un préstamo se conoce como:','Comisión por apertura del crédito.','Penalidad por pago anticipado.','Retención provisional de fondos.','Periodo de gracia o diferimiento.','d','Principiante'),
-
-/* 29..56 Intermedio */
- /*29*/ makeQ('El propósito fundamental de la educación financiera es:','Proporcionar herramientas para administrar el dinero eficazmente.','Identificar cuál es el mejor banco del país.','Facilitar el acceso a créditos complejos.','Enseñar exclusivamente sobre inversión en bolsa de valores.','a','Intermedio'),
- /*30*/ makeQ('Vivir sin objetivos financieros claros se puede comparar con:','Conducir un automóvil sin combustible en el tanque.','Navegar en internet sin conexión estable.','Habitar en una casa recién construida sin amueblar.','Leer un libro sin páginas numeradas.','b','Intermedio'),
- /*31*/ makeQ('La deuda de tarjetas de crédito frecuentemente se clasifica como "deuda mala" porque:','Está respaldada por bienes inmuebles de alto valor.','Siempre es deducible de impuestos en la declaración anual.','Tiene tasas elevadas y no genera beneficios futuros.','Sus tasas de interés son muy bajas comparadas con otros créditos.','c','Intermedio'),
- /*32*/ makeQ('Antes de abrir una cuenta de ahorros es prudente:','Depositar grandes cantidades sin verificar las condiciones.','Aceptar la primera oferta sin leer detenidamente.','Abrir múltiples cuentas simultáneamente en varios bancos.','Revisar condiciones y hacer preguntas específicas.','d','Intermedio'),
- /*33*/ makeQ('El periodo de gracia en un préstamo se refiere a:','El tiempo entre recibir el dinero y el primer pago.','La fecha límite de vencimiento del crédito.','El plazo máximo de mora sin penalizaciones.','Un descuento especial en los intereses pactados.','a','Intermedio'),
- /*34*/ makeQ('La construcción de riqueza a largo plazo requiere aprender sobre:','Exclusivamente la planificación tributaria y fiscal.','Diversificación, interés compuesto y gestión de activos.','Únicamente los diferentes tipos de deudas disponibles.','Solo créditos de alto riesgo y alta rentabilidad.','b','Intermedio'),
- /*35*/ makeQ('Para desarrollar hábitos financieros saludables y sostenibles se recomienda:','Depender completamente de asesores financieros externos.','Evitar totalmente cualquier tipo de deuda.','Estudiar y actualizar conocimientos regularmente.','Leer únicamente noticias económicas diarias.','c','Intermedio'),
- /*36*/ makeQ('Ingresos como comisiones, bonos, premios o subsidios se clasifican como:','Ingresos fijos garantizados mensualmente.','Ingresos pasivos generados automáticamente.','Ingresos no contables para efectos fiscales.','Ingresos variables sin periodicidad garantizada.','d','Intermedio'),
- /*37*/ makeQ('Invertir en títulos valores o certificados de depósito implica tener:','Instrumentos de renta fija y, potencialmente, variable.','Únicamente instrumentos de renta variable.','Exclusivamente bienes tangibles y físicos.','Dinero guardado en efectivo disponible.','a','Intermedio'),
- /*38*/ makeQ('La matemática financiera se enfoca principalmente en:','Calcular activos y pasivos legales corporativos.','Trasladar capitales y montos en el tiempo.','Determinar impuestos y deducciones fiscales.','Gestionar tasas bancarias y comisiones administrativas.','b','Intermedio'),
- /*39*/ makeQ('Un nivel prudente de "deuda mala" en tus finanzas personales debería ser:','Aproximadamente el 10% de tu ingreso anual total.','Variable según las políticas del banco que uses.','Prácticamente inexistente o muy reducido.','Superior a la mitad de tus ingresos mensuales.','c','Intermedio'),
- /*40*/ makeQ('En el contexto de un préstamo, los "cargos" representan:','La tasa de interés final acordada en el contrato.','El monto total de cada cuota mensual de pago.','La garantía o colateral requerido por el banco.','Costos administrativos cobrados una sola vez.','d','Intermedio'),
- /*41*/ makeQ('Un fondo de inversión se define como:','Un patrimonio común administrado profesionalmente.','Un crédito colectivo otorgado entre instituciones bancarias.','Un préstamo sin intereses para inversionistas nuevos.','Una cuenta de ahorros que nunca genera rendimientos.','a','Intermedio'),
- /*42*/ makeQ('Cuando tus ingresos superan a tus gastos en un periodo determinado, la diferencia representa:','Tu patrimonio neto actualizado.','El ahorro generado en ese periodo.','Los impuestos que debes declarar.','Tu liquidez proyectada futura.','b','Intermedio'),
- /*43*/ makeQ('Antes de solicitar un crédito hipotecario es aconsejable:','Aumentar significativamente el cupo de tus tarjetas.','Solicitar un crédito tipo globo como respaldo.','Reducir o eliminar deudas de consumo existentes.','No revisar el estado de tus deudas actuales.','c','Intermedio'),
- /*44*/ makeQ('La diversificación de inversiones consiste en:','Invertir todos los recursos en una sola empresa sólida.','Guardar todo el dinero disponible en efectivo.','Comprar exclusivamente bonos gubernamentales.','Distribuir el capital en varios tipos de activos.','d','Intermedio'),
- /*45*/ makeQ('La educación financiera te permite principalmente:','Desarrollar habilidades para una salud financiera integral.','Calcular únicamente tasas de interés complejas.','Dejar de utilizar cuentas bancarias tradicionales.','Acumular efectivo sin establecer metas claras.','a','Intermedio'),
- /*46*/ makeQ('Al elegir fondos mutuos de inversión, el inversionista debe considerar:','La cantidad de oficinas que tiene la empresa.','Sus objetivos personales y tolerancia al riesgo.','Las opiniones no fundamentadas de amigos.','Los flujos históricos de capital extranjero.','b','Intermedio'),
- /*47*/ makeQ('Durante la vigencia de un crédito, el cliente tiene derecho a:','Exigir tasas menores sin procesos de negociación.','No ser evaluado crediticiamente en ningún momento.','Recibir comprobantes y documentación de movimientos.','Modificar unilateralmente las condiciones del contrato.','c','Intermedio'),
- /*48*/ makeQ('La práctica recomendada con facturas, recibos e impuestos pagados es:','Desecharlos inmediatamente después del pago.','Incluirlos en tu portafolio de inversiones.','Archivar únicamente los del año fiscal actual.','Guardarlos de manera ordenada y accesible.','d','Intermedio'),
- /*49*/ makeQ('La competencia para gestionar ingresos y egresos personales implica:','Controlar los flujos de dinero del día a día.','Evaluar únicamente inversiones empresariales complejas.','Gestionar exclusivamente el capital de trabajo corporativo.','Calcular solamente tasas de interés de largo plazo.','a','Intermedio'),
- /*50*/ makeQ('El documento esencial para comprender los costos de un fondo mutuo es:','Tu declaración de renta anual presentada.','El prospecto informativo del fondo.','Los extractos bancarios mensuales recientes.','El contrato de arrendamiento de vivienda.','b','Intermedio'),
- /*51*/ makeQ('Una ventaja clave de las instituciones financieras reguladas es:','Ofrecer rentabilidades siempre superiores al mercado.','Operar con niveles de riesgo muy elevados.','Brindar seguridad legal y supervisión estatal.','Obligar a contratar todos sus productos disponibles.','c','Intermedio'),
- /*52*/ makeQ('Al enviar dinero de un país a otro, un factor crítico a verificar es:','Las tasas de interés vigentes en ambos países.','La historia completa de la institución financiera.','La situación geopolítica actual internacional.','El tipo de cambio aplicado en la transacción.','d','Intermedio'),
- /*53*/ makeQ('Los corredores o brokers hipotecarios son profesionales que:','Comparan opciones de crédito para el comprador.','Actúan como prestamistas informales no regulados.','Se dedican exclusivamente a tasar viviendas.','Funcionan como notarios especializados en inmuebles.','a','Intermedio'),
- /*54*/ makeQ('Una inversión con mayor potencial de crecimiento a largo plazo generalmente es:','Cuentas de ahorro tradicionales básicas.','Fondos mutuos de renta variable (accionarios).','Certificados de depósito a término fijo.','Apuestas deportivas y juegos de azar.','b','Intermedio'),
- /*55*/ makeQ('Para iniciar un presupuesto personal efectivo debes primero:','Cancelar completamente todas tus deudas.','Establecer una fuente de ingreso pasivo.','Estimar tus ingresos y gastos del periodo.','Completar formularios de declaración de impuestos.','c','Intermedio'),
- /*56*/ makeQ('La diferencia principal entre proveedores formales e informales de remesas es que los formales:','No cobran ningún tipo de comisión por servicio.','Operan sin ninguna regulación gubernamental.','No reportan las transacciones a las autoridades.','Están supervisados por autoridades financieras.','d','Intermedio'),
-
-/* 57..84 Avanzado */
- /*57*/ makeQ('La principal diferencia entre solvencia y liquidez es que:','La liquidez mide tu capacidad inmediata de pago.','La solvencia se aplica exclusivamente a empresas.','La liquidez calcula únicamente activos futuros.','Ambos términos son completamente idénticos.','a','Avanzado'),
- /*58*/ makeQ('Las metas financieras deben definirse antes del presupuesto porque:','Evitan el pago de impuestos innecesarios.','Orientan cómo se distribuirán los recursos.','Permiten calcular con precisión tu patrimonio neto.','Determinan automáticamente la tasa efectiva anual.','b','Avanzado'),
- /*59*/ makeQ('La sostenibilidad financiera a largo plazo implica:','Realizar un esfuerzo de ahorro único y puntual.','Invertir exclusivamente en negocios ecológicos.','Mantener disciplina constante para asegurar estabilidad.','Buscar retornos inmediatos y muy elevados.','c','Avanzado'),
- /*60*/ makeQ('Para alguien que ya tiene hábitos sólidos de ahorro, el análisis detallado de gastos:','Debe realizarse diariamente sin excepción.','Debe enfocarse exclusivamente en gastos de lujo.','Puede ser menos riguroso si ya hay control establecido.','Debe eliminar por completo los gastos fijos.','c','Avanzado'),
- /*61*/ makeQ('En el análisis presupuestario, la "diferencia real" se refiere a:','La diferencia entre ingresos y gastos reales.','La variación entre el plan y el ahorro logrado.','El saldo disponible en certificados de depósito.','La diferencia nominal reportada por el banco.','a','Avanzado'),
- /*62*/ makeQ('Refinanciar una deuda consiste en:','Extender el plazo sin revisar otras condiciones.','Reemplazar un préstamo por otro con mejores términos.','Consolidar automáticamente todas las deudas existentes.','Eliminar completamente los intereses acumulados.','b','Avanzado'),
- /*63*/ makeQ('Cuando un préstamo de tasa ajustable no cubre todos los intereses generados, ocurre:','Una situación de mora preventiva automática.','La aplicación de una tasa preferencial temporal.','Amortización negativa del capital.','Un periodo de pago extendido sin cargos.','c','Avanzado'),
- /*64*/ makeQ('El APR (Annual Percentage Rate) de un préstamo representa:','La tasa de interés simple del banco prestamista.','El porcentaje de tu patrimonio comprometido.','La tasa de inflación estimada para el periodo.','El costo anual total incluyendo intereses y cargos.','d','Avanzado'),
- /*65*/ makeQ('El principal riesgo al contratar un asesor financiero por horas es:','Contratar alguien ineficiente sin claridad del costo final.','Estar obligado a tasas de interés específicas.','Ser forzado a realizar inversiones inmediatas.','No poder modificar el plan financiero después.','a','Avanzado'),
- /*66*/ makeQ('Las tarjetas de crédito tienen tasas de interés elevadas principalmente porque:','No requieren garantías reales o colaterales.','Están subsidiadas por programas gubernamentales.','Son préstamos sin contrato formal escrito.','Se diseñan exclusivamente para uso empresarial.','a','Avanzado'),
- /*67*/ makeQ('La libertad financiera se alcanza cuando:','Tu consumo mensual supera tus ingresos regulares.','El rendimiento de tus activos cubre tus gastos.','Acumulas múltiples tarjetas de crédito disponibles.','El banco incrementa tus tasas de interés.','b','Avanzado'),
- /*68*/ makeQ('Los ahorros destinados a objetivos de corto plazo deben mantenerse en:','Acciones de empresas con alta volatilidad.','Inversiones en negocios emprendedores.','Instrumentos líquidos y de bajo riesgo.','Préstamos hipotecarios de largo plazo.','c','Avanzado'),
- /*69*/ makeQ('Un fondo de emergencia adecuado generalmente equivale a:','Un mes completo de salario neto recibido.','La mitad del valor total de tu patrimonio.','Un trimestre completo de ingresos brutos.','De 3 a 6 meses de gastos esenciales.','d','Avanzado'),
- /*70*/ makeQ('Comprar un bono como inversión significa:','Prestar dinero a un emisor que pagará intereses.','Adquirir acciones de propiedad en una empresa.','Comprar un certificado de depósito variable.','Adquirir un pagaré de obligación personal.','a','Avanzado'),
- /*71*/ makeQ('Un portafolio de inversión se define como:','Un crédito hipotecario estructurado y complejo.','Un conjunto diversificado de activos financieros.','Un certificado de depósito de largo plazo.','Una anualidad vitalicia garantizada.','b','Avanzado'),
- /*72*/ makeQ('En matemática financiera, la capitalización es el proceso de:','Convertir el valor futuro en valor inicial presente.','Sumar todas las cuotas pagadas históricamente.','Obtener el valor futuro desde el capital inicial.','Reducir las tasas de interés aplicables.','c','Avanzado'),
- /*73*/ makeQ('El valor nominal de un documento financiero es:','Su valor descontado a la fecha actual.','El capital inicial sin considerar intereses.','El valor presente con fines legales.','La cantidad a pagar al vencimiento.','d','Avanzado'),
- /*74*/ makeQ('La educación financiera busca principalmente:','Formar hábitos para decisiones sostenibles.','Convertirte en un experto bursátil profesional.','Incrementar continuamente tu nivel de gasto.','Enfocarse exclusivamente en el ahorro.','a','Avanzado'),
- /*75*/ makeQ('Tener previsión de contingencias significa:','Evitar solicitar cualquier préstamo hipotecario.','Poder afrontar imprevistos sin endeudarse.','Realizar retiros impulsivos frecuentemente.','Cubrir únicamente las deudas existentes.','b','Avanzado'),
- /*76*/ makeQ('Una desventaja para adultos que reciben educación financiera por primera vez es:','Aprender los conceptos demasiado rápido.','Obtener menores ingresos temporalmente.','Resistirse a cambiar hábitos arraigados.','No poder acceder a inversiones complejas.','c','Avanzado'),
- /*77*/ makeQ('Cuando la educación financiera se evalúa mediante pruebas estandarizadas, hablamos de:','Educación financiera conductual aplicada.','Análisis contextual de finanzas personales.','Medición parafiscal de conocimientos.','Educación financiera objetiva.','d','Avanzado'),
- /*78*/ makeQ('Para evitar compras impulsivas o emocionales se recomienda:','Usar estrategias de control consciente del dinero.','Endeudarse únicamente con "deuda buena".','Pagar todas las compras con préstamos.','Comprar siempre en épocas de promociones.','a','Avanzado'),
- /*79*/ makeQ('La riqueza medida en términos de tiempo se refiere a:','La cantidad de dinero que ganas anualmente.','Cuánto tiempo puedes vivir sin ingresos activos.','La suma total de tus inversiones actuales.','El valor acumulado en propiedades inmobiliarias.','b','Avanzado'),
- /*80*/ makeQ('Un seguro es fundamentalmente:','Un certificado de depósito con características especiales.','Una inversión de renta fija garantizada.','Un acuerdo de compensación por pérdidas mediante pagos.','Un crédito rotativo de emergencia.','c','Avanzado'),
- /*81*/ makeQ('Una tarjeta de pago (charge card) se caracteriza por:','Tener intereses rotativos mensuales variables.','No requerir ningún pago mínimo mensual.','Exigir pago total del saldo en cada corte.','Ser una tarjeta prepagada recargable.','c','Avanzado'),
- /*82*/ makeQ('Una tarjeta de débito se diferencia de una de crédito porque:','Toma dinero directamente de tu cuenta.','Utiliza un cupo de dinero prestado.','Permite pagos en cuotas extendidas.','Siempre genera intereses sobre saldo.','a','Avanzado'),
- /*83*/ makeQ('Un fondo de renta fija de corto plazo típicamente invierte en:','Bonos con vencimientos superiores a 10 años.','Bonos que maduran en 2-3 años aproximadamente.','Acciones con alta volatilidad de mercado.','Contratos de futuros en divisas internacionales.','b','Avanzado'),
- /*84*/ makeQ('Un Certificado de Inversión indexado es atractivo porque:','Está completamente libre de impuestos siempre.','Equivale a un préstamo sin garantías.','Sus rendimientos suelen ajustarse con la inflación.','Utiliza únicamente interés simple en su cálculo.','c','Avanzado')
+/*29*/ makeQ('El propósito fundamental de la educación financiera es:','Proporcionar herramientas para administrar el dinero eficazmente.','Identificar cuál es el mejor banco del país.','Facilitar el acceso a créditos complejos.','Enseñar exclusivamente sobre inversión en bolsa de valores.','a','Intermedio'),
+/*30*/ makeQ('Vivir sin objetivos financieros claros se puede comparar con:','Conducir un automóvil sin combustible en el tanque.','Navegar en internet sin conexión estable.','Habitar en una casa recién construida sin amueblar.','Leer un libro sin páginas numeradas.','b','Intermedio'),
+/*31*/ makeQ('La deuda de tarjetas de crédito frecuentemente se clasifica como "deuda mala" porque:','Está respaldada por bienes inmuebles de alto valor.','Siempre es deducible de impuestos en la declaración anual.','Tiene tasas elevadas y no genera beneficios futuros.','Sus tasas de interés son muy bajas comparadas con otros créditos.','c','Intermedio'),
+/*32*/ makeQ('Antes de abrir una cuenta de ahorros es prudente:','Depositar grandes cantidades sin verificar las condiciones.','Aceptar la primera oferta sin leer detenidamente.','Abrir múltiples cuentas simultáneamente en varios bancos.','Revisar condiciones y hacer preguntas específicas.','d','Intermedio'),
+/*33*/ makeQ('El periodo de gracia en un préstamo se refiere a:','El tiempo entre recibir el dinero y el primer pago.','La fecha límite de vencimiento del crédito.','El plazo máximo de mora sin penalizaciones.','Un descuento especial en los intereses pactados.','a','Intermedio'),
+/*34*/ makeQ('La construcción de riqueza a largo plazo requiere aprender sobre:','Exclusivamente la planificación tributaria y fiscal.','Diversificación, interés compuesto y gestión de activos.','Únicamente los diferentes tipos de deudas disponibles.','Solo créditos de alto riesgo y alta rentabilidad.','b','Intermedio'),
+/*35*/ makeQ('Para desarrollar hábitos financieros saludables y sostenibles se recomienda:','Depender completamente de asesores financieros externos.','Evitar totalmente cualquier tipo de deuda.','Estudiar y actualizar conocimientos regularmente.','Leer únicamente noticias económicas diarias.','c','Intermedio'),
+/*36*/ makeQ('Ingresos como comisiones, bonos, premios o subsidios se clasifican como:','Ingresos fijos garantizados mensualmente.','Ingresos pasivos generados automáticamente.','Ingresos no contables para efectos fiscales.','Ingresos variables sin periodicidad garantizada.','d','Intermedio'),
+/*37*/ makeQ('Invertir en títulos valores o certificados de depósito implica tener:','Instrumentos de renta fija y, potencialmente, variable.','Únicamente instrumentos de renta variable.','Exclusivamente bienes tangibles y físicos.','Dinero guardado en efectivo disponible.','a','Intermedio'),
+/*38*/ makeQ('La matemática financiera se enfoca principalmente en:','Calcular activos y pasivos legales corporativos.','Trasladar capitales y montos en el tiempo.','Determinar impuestos y deducciones fiscales.','Gestionar tasas bancarias y comisiones administrativas.','b','Intermedio'),
+/*39*/ makeQ('Un nivel prudente de "deuda mala" en tus finanzas personales debería ser:','Aproximadamente el 10% de tu ingreso anual total.','Variable según las políticas del banco que uses.','Prácticamente inexistente o muy reducido.','Superior a la mitad de tus ingresos mensuales.','c','Intermedio'),
+/*40*/ makeQ('En el contexto de un préstamo, los "cargos" representan:','La tasa de interés final acordada en el contrato.','El monto total de cada cuota mensual de pago.','La garantía o colateral requerido por el banco.','Costos administrativos cobrados una sola vez.','d','Intermedio'),
+/*41*/ makeQ('Un fondo de inversión se define como:','Un patrimonio común administrado profesionalmente.','Un crédito colectivo otorgado entre instituciones bancarias.','Un préstamo sin intereses para inversionistas nuevos.','Una cuenta de ahorros que nunca genera rendimientos.','a','Intermedio'),
+/*42*/ makeQ('Cuando tus ingresos superan a tus gastos en un periodo determinado, la diferencia representa:','Tu patrimonio neto actualizado.','El ahorro generado en ese periodo.','Los impuestos que debes declarar.','Tu liquidez proyectada futura.','b','Intermedio'),
+/*43*/ makeQ('Antes de solicitar un crédito hipotecario es aconsejable:','Aumentar significativamente el cupo de tus tarjetas.','Solicitar un crédito tipo globo como respaldo.','Reducir o eliminar deudas de consumo existentes.','No revisar el estado de tus deudas actuales.','c','Intermedio'),
+/*44*/ makeQ('La diversificación de inversiones consiste en:','Invertir todos los recursos en una sola empresa sólida.','Guardar todo el dinero disponible en efectivo.','Comprar exclusivamente bonos gubernamentales.','Distribuir el capital en varios tipos de activos.','d','Intermedio'),
+/*45*/ makeQ('La educación financiera te permite principalmente:','Desarrollar habilidades para una salud financiera integral.','Calcular únicamente tasas de interés complejas.','Dejar de utilizar cuentas bancarias tradicionales.','Acumular efectivo sin establecer metas claras.','a','Intermedio'),
+/*46*/ makeQ('Al elegir fondos mutuos de inversión, el inversionista debe considerar:','La cantidad de oficinas que tiene la empresa.','Sus objetivos personales y tolerancia al riesgo.','Las opiniones no fundamentadas de amigos.','Los flujos históricos de capital extranjero.','b','Intermedio'),
+/*47*/ makeQ('Durante la vigencia de un crédito, el cliente tiene derecho a:','Exigir tasas menores sin procesos de negociación.','No ser evaluado crediticiamente en ningún momento.','Recibir comprobantes y documentación de movimientos.','Modificar unilateralmente las condiciones del contrato.','c','Intermedio'),
+/*48*/ makeQ('La práctica recomendada con facturas, recibos e impuestos pagados es:','Desecharlos inmediatamente después del pago.','Incluirlos en tu portafolio de inversiones.','Archivar únicamente los del año fiscal actual.','Guardarlos de manera ordenada y accesible.','d','Intermedio'),
+/*49*/ makeQ('La competencia para gestionar ingresos y egresos personales implica:','Controlar los flujos de dinero del día a día.','Evaluar únicamente inversiones empresariales complejas.','Gestionar exclusivamente el capital de trabajo corporativo.','Calcular solamente tasas de interés de largo plazo.','a','Intermedio'),
+/*50*/ makeQ('El documento esencial para comprender los costos de un fondo mutuo es:','Tu declaración de renta anual presentada.','El prospecto informativo del fondo.','Los extractos bancarios mensuales recientes.','El contrato de arrendamiento de vivienda.','b','Intermedio'),
+/*51*/ makeQ('Una ventaja clave de las instituciones financieras reguladas es:','Ofrecer rentabilidades siempre superiores al mercado.','Operar con niveles de riesgo muy elevados.','Brindar seguridad legal y supervisión estatal.','Obligar a contratar todos sus productos disponibles.','c','Intermedio'),
+/*52*/ makeQ('Al enviar dinero de un país a otro, un factor crítico a verificar es:','Las tasas de interés vigentes en ambos países.','La historia completa de la institución financiera.','La situación geopolítica actual internacional.','El tipo de cambio aplicado en la transacción.','d','Intermedio'),
+/*53*/ makeQ('Los corredores o brokers hipotecarios son profesionales que:','Comparan opciones de crédito para el comprador.','Actúan como prestamistas informales no regulados.','Se dedican exclusivamente a tasar viviendas.','Funcionan como notarios especializados en inmuebles.','a','Intermedio'),
+/*54*/ makeQ('Una inversión con mayor potencial de crecimiento a largo plazo generalmente es:','Cuentas de ahorro tradicionales básicas.','Fondos mutuos de renta variable (accionarios).','Certificados de depósito a término fijo.','Apuestas deportivas y juegos de azar.','b','Intermedio'),
+/*55*/ makeQ('Para iniciar un presupuesto personal efectivo debes primero:','Cancelar completamente todas tus deudas.','Establecer una fuente de ingreso pasivo.','Estimar tus ingresos y gastos del periodo.','Completar formularios de declaración de impuestos.','c','Intermedio'),
+/*56*/ makeQ('La diferencia principal entre proveedores formales e informales de remesas es que los formales:','No cobran ningún tipo de comisión por servicio.','Operan sin ninguna regulación gubernamental.','No reportan las transacciones a las autoridades.','Están supervisados por autoridades financieras.','d','Intermedio'),
+/*57*/ makeQ('La principal diferencia entre solvencia y liquidez es que:','La liquidez mide tu capacidad inmediata de pago.','La solvencia se aplica exclusivamente a empresas.','La liquidez calcula únicamente activos futuros.','Ambos términos son completamente idénticos.','a','Avanzado'),
+/*58*/ makeQ('Las metas financieras deben definirse antes del presupuesto porque:','Evitan el pago de impuestos innecesarios.','Orientan cómo se distribuirán los recursos.','Permiten calcular con precisión tu patrimonio neto.','Determinan automáticamente la tasa efectiva anual.','b','Avanzado'),
+/*59*/ makeQ('La sostenibilidad financiera a largo plazo implica:','Realizar un esfuerzo de ahorro único y puntual.','Invertir exclusivamente en negocios ecológicos.','Mantener disciplina constante para asegurar estabilidad.','Buscar retornos inmediatos y muy elevados.','c','Avanzado'),
+/*60*/ makeQ('Para alguien que ya tiene hábitos sólidos de ahorro, el análisis detallado de gastos:','Debe realizarse diariamente sin excepción.','Debe enfocarse exclusivamente en gastos de lujo.','Puede ser menos riguroso si ya hay control establecido.','Debe eliminar por completo los gastos fijos.','c','Avanzado'),
+/*61*/ makeQ('En el análisis presupuestario, la "diferencia real" se refiere a:','La diferencia entre ingresos y gastos reales.','La variación entre el plan y el ahorro logrado.','El saldo disponible en certificados de depósito.','La diferencia nominal reportada por el banco.','a','Avanzado'),
+/*62*/ makeQ('Refinanciar una deuda consiste en:','Extender el plazo sin revisar otras condiciones.','Reemplazar un préstamo por otro con mejores términos.','Consolidar automáticamente todas las deudas existentes.','Eliminar completamente los intereses acumulados.','b','Avanzado'),
+/*63*/ makeQ('Cuando un préstamo de tasa ajustable no cubre todos los intereses generados, ocurre:','Una situación de mora preventiva automática.','La aplicación de una tasa preferencial temporal.','Amortización negativa del capital.','Un periodo de pago extendido sin cargos.','c','Avanzado'),
+/*64*/ makeQ('El APR (Annual Percentage Rate) de un préstamo representa:','La tasa de interés simple del banco prestamista.','El porcentaje de tu patrimonio comprometido.','La tasa de inflación estimada para el periodo.','El costo anual total incluyendo intereses y cargos.','d','Avanzado'),
+/*65*/ makeQ('El principal riesgo al contratar un asesor financiero por horas es:','Contratar alguien ineficiente sin claridad del costo final.','Estar obligado a tasas de interés específicas.','Ser forzado a realizar inversiones inmediatas.','No poder modificar el plan financiero después.','a','Avanzado'),
+/*66*/ makeQ('Las tarjetas de crédito tienen tasas de interés elevadas principalmente porque:','No requieren garantías reales o colaterales.','Están subsidiadas por programas gubernamentales.','Son préstamos sin contrato formal escrito.','Se diseñan exclusivamente para uso empresarial.','a','Avanzado'),
+/*67*/ makeQ('La libertad financiera se alcanza cuando:','Tu consumo mensual supera tus ingresos regulares.','El rendimiento de tus activos cubre tus gastos.','Acumulas múltiples tarjetas de crédito disponibles.','El banco incrementa tus tasas de interés.','b','Avanzado'),
+/*68*/ makeQ('Los ahorros destinados a objetivos de corto plazo deben mantenerse en:','Acciones de empresas con alta volatilidad.','Inversiones en negocios emprendedores.','Instrumentos líquidos y de bajo riesgo.','Préstamos hipotecarios de largo plazo.','c','Avanzado'),
+/*69*/ makeQ('Un fondo de emergencia adecuado generalmente equivale a:','Un mes completo de salario neto recibido.','La mitad del valor total de tu patrimonio.','Un trimestre completo de ingresos brutos.','De 3 a 6 meses de gastos esenciales.','d','Avanzado'),
+/*70*/ makeQ('Comprar un bono como inversión significa:','Prestar dinero a un emisor que pagará intereses.','Adquirir acciones de propiedad en una empresa.','Comprar un certificado de depósito variable.','Adquirir un pagaré de obligación personal.','a','Avanzado'),
+/*71*/ makeQ('Un portafolio de inversión se define como:','Un crédito hipotecario estructurado y complejo.','Un conjunto diversificado de activos financieros.','Un certificado de depósito de largo plazo.','Una anualidad vitalicia garantizada.','b','Avanzado'),
+/*72*/ makeQ('En matemática financiera, la capitalización es el proceso de:','Convertir el valor futuro en valor inicial presente.','Sumar todas las cuotas pagadas históricamente.','Obtener el valor futuro desde el capital inicial.','Reducir las tasas de interés aplicables.','c','Avanzado'),
+/*73*/ makeQ('El valor nominal de un documento financiero es:','Su valor descontado a la fecha actual.','El capital inicial sin considerar intereses.','El valor presente con fines legales.','La cantidad a pagar al vencimiento.','d','Avanzado'),
+/*74*/ makeQ('La educación financiera busca principalmente:','Formar hábitos para decisiones sostenibles.','Convertirte en un experto bursátil profesional.','Incrementar continuamente tu nivel de gasto.','Enfocarse exclusivamente en el ahorro.','a','Avanzado'),
+/*75*/ makeQ('Tener previsión de contingencias significa:','Evitar solicitar cualquier préstamo hipotecario.','Poder afrontar imprevistos sin endeudarse.','Realizar retiros impulsivos frecuentemente.','Cubrir únicamente las deudas existentes.','b','Avanzado'),
+/*76*/ makeQ('Una desventaja para adultos que reciben educación financiera por primera vez es:','Aprender los conceptos demasiado rápido.','Obtener menores ingresos temporalmente.','Resistirse a cambiar hábitos arraigados.','No poder acceder a inversiones complejas.','c','Avanzado'),
+/*77*/ makeQ('Cuando la educación financiera se evalúa mediante pruebas estandarizadas, hablamos de:','Educación financiera conductual aplicada.','Análisis contextual de finanzas personales.','Medición parafiscal de conocimientos.','Educación financiera objetiva.','d','Avanzado'),
+/*78*/ makeQ('Para evitar compras impulsivas o emocionales se recomienda:','Usar estrategias de control consciente del dinero.','Endeudarse únicamente con "deuda buena".','Pagar todas las compras con préstamos.','Comprar siempre en épocas de promociones.','a','Avanzado'),
+/*79*/ makeQ('La riqueza medida en términos de tiempo se refiere a:','La cantidad de dinero que ganas anualmente.','Cuánto tiempo puedes vivir sin ingresos activos.','La suma total de tus inversiones actuales.','El valor acumulado en propiedades inmobiliarias.','b','Avanzado'),
+/*80*/ makeQ('Un seguro es fundamentalmente:','Un certificado de depósito con características especiales.','Una inversión de renta fija garantizada.','Un acuerdo de compensación por pérdidas mediante pagos.','Un crédito rotativo de emergencia.','c','Avanzado'),
+/*81*/ makeQ('Una tarjeta de pago (charge card) se caracteriza por:','Tener intereses rotativos mensuales variables.','No requerir ningún pago mínimo mensual.','Exigir pago total del saldo en cada corte.','Ser una tarjeta prepagada recargable.','c','Avanzado'),
+/*82*/ makeQ('Una tarjeta de débito se diferencia de una de crédito porque:','Toma dinero directamente de tu cuenta.','Utiliza un cupo de dinero prestado.','Permite pagos en cuotas extendidas.','Siempre genera intereses sobre saldo.','a','Avanzado'),
+/*83*/ makeQ('Un fondo de renta fija de corto plazo típicamente invierte en:','Bonos con vencimientos superiores a 10 años.','Bonos que maduran en 2-3 años aproximadamente.','Acciones con alta volatilidad de mercado.','Contratos de futuros en divisas internacionales.','b','Avanzado'),
+/*84*/ makeQ('Un Certificado de Inversión indexado es atractivo porque:','Está completamente libre de impuestos siempre.','Equivale a un préstamo sin garantías.','Sus rendimientos suelen ajustarse con la inflación.','Utiliza únicamente interés simple en su cálculo.','c','Avanzado')
 ];
 
 /* ---------- Distribución Opción B (aleatoria dentro de niveles) ---------- */
@@ -418,6 +419,9 @@ function renderCurrent(){
 
   // hide submit until end
   submitQuiz.style.display = 'none';
+  // if a tie-breaker UI is present from before, remove it (fresh question)
+  const oldTie = document.getElementById('tie-breaker');
+  if(oldTie) oldTie.remove();
 }
 
 /* Evaluate when user selects an option */
@@ -466,7 +470,7 @@ function showToast(message, type){
   setTimeout(()=>{ toastEl.className = 'toast'; }, 1500);
 }
 
-/* Submit quiz: compute weighted scores */
+/* Submit quiz: compute weighted scores and handle tie via manual buttons */
 submitQuiz.addEventListener('click', ()=>{
   let score1 = 0, score2 = 0;
   for(let i=0;i<12;i++){
@@ -477,23 +481,42 @@ submitQuiz.addEventListener('click', ()=>{
       if(i < 6) score1 += w; else score2 += w;
     }
   }
-  let winner = null;
-  if(score1 > score2) winner = currentQuiz.teams[0];
-  else if(score2 > score1) winner = currentQuiz.teams[1];
-  else {
-    if(confirm('Empate. ¿Desempatar aleatoriamente? OK = aleatorio, Cancel = elegir manualmente')){
-      winner = Math.random() < 0.5 ? currentQuiz.teams[0] : currentQuiz.teams[1];
-    } else {
-      const pick = prompt(`Empate. Escribe 1 para ${currentQuiz.teams[0]} o 2 para ${currentQuiz.teams[1]}`);
-      if(pick==='1') winner = currentQuiz.teams[0];
-      else if(pick==='2') winner = currentQuiz.teams[1];
-      else { alert('Entrada inválida. Se aplicará desempate aleatorio.'); winner = Math.random() < 0.5 ? currentQuiz.teams[0] : currentQuiz.teams[1]; }
-    }
-  }
 
-  applyResultToBracket(currentMatchKey, score1, score2, winner);
-  modalBackdrop.style.display = 'none';
+  // Determine immediate winner or show manual tie-break UI
+  if (score1 > score2) {
+    finalizeWinner(currentQuiz.teams[0], score1, score2);
+  } else if (score2 > score1) {
+    finalizeWinner(currentQuiz.teams[1], score1, score2);
+  } else {
+    // EMPATE — mostrar selección manual dentro del modal
+    submitQuiz.style.display = 'none';
+
+    // Remove any existing tie-breaker UI
+    const old = document.getElementById('tie-breaker');
+    if(old) old.remove();
+
+    const tieDiv = document.createElement('div');
+    tieDiv.id = "tie-breaker";
+    tieDiv.innerHTML = `
+      <div class="small" style="margin-bottom:8px;">⚠️ Empate detectado (${score1} - ${score2}). Seleccione manualmente el ganador:</div>
+      <div class="tie-row">
+        <button class="btn" id="pickTeam1">${currentQuiz.teams[0]}</button>
+        <button class="btn" id="pickTeam2">${currentQuiz.teams[1]}</button>
+      </div>
+    `;
+    quizContainer.appendChild(tieDiv);
+
+    document.getElementById('pickTeam1').onclick = () => finalizeWinner(currentQuiz.teams[0], score1, score2);
+    document.getElementById('pickTeam2').onclick = () => finalizeWinner(currentQuiz.teams[1], score1, score2);
+  }
 });
+
+/* finalizeWinner: apply and close modal */
+function finalizeWinner(winnerName, s1, s2){
+  applyResultToBracket(currentMatchKey, s1, s2, winnerName);
+  // close modal
+  modalBackdrop.style.display = 'none';
+}
 
 /* Open quiz: single click for quarters, dblclick for semis/final */
 document.querySelectorAll('.match').forEach(el=>{
@@ -571,7 +594,6 @@ function propagateQuarterToSemi(){
   if(bracketState.q1.winner) {
     document.getElementById('sf1-team1').querySelector('.team-name').textContent = bracketState.q1.winner;
     document.getElementById('sf1-title').textContent = `SF1 — ${bracketState.q1.winner} vs ${ bracketState.q2.winner ? bracketState.q2.winner : 'Ganador Q2'}`;
-    // set team names in the quiz object for SF1 if both are available
     if(quizzes.sf1){
       if(bracketState.q1.winner) quizzes.sf1.teams[0] = bracketState.q1.winner;
     }
